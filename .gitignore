@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+
+.env
+.env.local
+.env.*.local
+
+.vercel/
+*.log
+*.tsbuildinfo
+
+vite.config.js
+vite.config.d.ts
+
+.DS_Store
+Thumbs.db
