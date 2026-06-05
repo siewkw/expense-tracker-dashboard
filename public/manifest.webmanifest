@@ -7,8 +7,8 @@
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "portrait-primary",
-  "background_color": "#f6f8fb",
-  "theme_color": "#0e875a",
+  "background_color": "#4C2BD3",
+  "theme_color": "#4C2BD3",
   "categories": ["finance", "productivity"],
   "icons": [
     {
