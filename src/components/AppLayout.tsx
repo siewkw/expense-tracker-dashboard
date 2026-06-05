@@ -1,9 +1,10 @@
-import { BarChart3, Bot, CircleDollarSign, CreditCard, FileInput, FileText, Gauge, Landmark, LogOut, Menu, PiggyBank, Plus, Settings, TrendingUp, X } from 'lucide-react';
+import { Bot, CreditCard, FileInput, FileText, Gauge, Landmark, LogOut, Menu, PiggyBank, Plus, Settings, TrendingUp, X } from 'lucide-react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 import { clsx } from 'clsx';
 import { useState } from 'react';
 import { PwaInstallPrompt } from './PwaInstallPrompt';
+import { BrandLogo } from './BrandLogo';
 
 const links = [
   { to: '/', label: 'Dashboard', icon: Gauge },
@@ -35,9 +36,7 @@ export function AppLayout() {
     <div className="min-h-screen bg-white">
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 border-r border-slate-200/80 bg-slate-50/80 px-4 py-5 backdrop-blur-xl lg:block">
         <div className="mb-9 flex items-center gap-3 px-2">
-          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-[0_10px_24px_rgba(99,102,241,0.25)]">
-            <BarChart3 size={20} />
-          </span>
+          <BrandLogo showName={false} />
           <div>
             <p className="app-wordmark text-lg text-ink">SaveLah</p>
             <p className="max-w-40 truncate text-xs text-slate-400">{user?.email}</p>
@@ -74,12 +73,7 @@ export function AppLayout() {
       <div className="lg:pl-64">
         <header className="sticky top-0 z-30 border-b border-slate-100 bg-white/90 px-4 py-3 backdrop-blur-xl lg:hidden">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-md">
-                <CircleDollarSign size={20} />
-              </span>
-              <span className="app-wordmark text-lg">SaveLah</span>
-            </div>
+            <BrandLogo size="sm" />
             <button
               onClick={() => setMenuOpen(true)}
               className="grid h-11 w-11 place-items-center rounded-2xl text-slate-500 transition hover:bg-slate-100"
@@ -97,9 +91,12 @@ export function AppLayout() {
               onClick={(event) => event.stopPropagation()}
             >
               <div className="mb-5 flex items-center justify-between">
-                <div>
-                  <p className="app-wordmark text-lg text-ink">SaveLah</p>
-                  <p className="max-w-60 truncate text-xs text-slate-500">{user?.email}</p>
+                <div className="flex min-w-0 items-center gap-3">
+                  <BrandLogo showName={false} />
+                  <div className="min-w-0">
+                    <p className="app-wordmark text-lg text-ink">SaveLah</p>
+                    <p className="max-w-48 truncate text-xs text-slate-500">{user?.email}</p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setMenuOpen(false)}

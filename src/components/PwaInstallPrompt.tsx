@@ -1,6 +1,7 @@
 import { Download, Share2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from './ui';
+import { BrandLogo } from './BrandLogo';
 
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -74,8 +75,8 @@ export function PwaInstallPrompt() {
         <X size={18} />
       </button>
       <div className="pr-10">
-        <p className="font-semibold text-ink">Install <span className="app-wordmark">SaveLah</span></p>
-        <p className="mt-1 text-sm text-slate-600">Open your finance dashboard faster in a standalone app window.</p>
+        <BrandLogo size="sm" />
+        <p className="mt-3 text-sm text-slate-600">Install SaveLah for faster access in a standalone app window.</p>
       </div>
       {showIosHelp ? (
         <div className="mt-4 rounded-2xl bg-slate-50 p-3 text-sm text-slate-700">
