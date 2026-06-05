@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'savelah-v3';
+const CACHE_VERSION = 'savelah-v4';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const APP_SHELL = [
