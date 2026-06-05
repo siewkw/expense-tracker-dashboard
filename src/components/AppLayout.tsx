@@ -1,4 +1,4 @@
-import { Bot, CreditCard, FileInput, FileText, Gauge, Landmark, LogOut, Menu, PiggyBank, Plus, Settings, TrendingUp, X } from 'lucide-react';
+import { Bot, CreditCard, FileInput, FileText, Gauge, LogOut, Menu, PiggyBank, Plus, Settings, TrendingUp, X } from 'lucide-react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 import { clsx } from 'clsx';
@@ -15,7 +15,6 @@ const links = [
   { to: '/automations', label: 'Automations', icon: Bot },
   { to: '/reports', label: 'Reports', icon: FileText },
   { to: '/investments', label: 'Investments', icon: TrendingUp },
-  { to: '/net-worth', label: 'Net Worth', icon: Landmark },
   { to: '/settings', label: 'Settings', icon: Settings },
 ];
 

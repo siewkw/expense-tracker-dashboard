@@ -9,7 +9,6 @@ import { ForgotPassword } from './pages/ForgotPassword';
 import { ImportExport } from './pages/ImportExport';
 import { Investments } from './pages/Investments';
 import { Login } from './pages/Login';
-import { NetWorth } from './pages/NetWorth';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
 import { SignUp } from './pages/SignUp';
@@ -31,7 +30,6 @@ export default function App() {
           <Route path="/automations" element={<Automations />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/investments" element={<Investments />} />
-          <Route path="/net-worth" element={<NetWorth />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>

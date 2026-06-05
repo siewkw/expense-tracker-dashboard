@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowDownRight, ArrowUpRight, Landmark, PiggyBank, ReceiptText, WalletCards } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, PiggyBank, ReceiptText, WalletCards } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Card, ErrorMessage, Field, Input, PageHeader, Skeleton, StatCard } from '../components/ui';
 import { CHART_COLORS } from '../constants/finance';
@@ -18,7 +18,7 @@ export function Dashboard() {
     <>
       <PageHeader
         title="Dashboard"
-        description="A private date-bounded view of income, spending, budgets, investments, and net worth."
+        description="A private date-bounded view of income, spending, budgets, and investments."
         action={
           <div className="grid grid-cols-2 gap-3">
             <Field label="From"><Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /></Field>
@@ -29,7 +29,7 @@ export function Dashboard() {
       {error ? <ErrorMessage message={`We could not load your dashboard data. ${error}`} /> : null}
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 7 }).map((_, index) => <Skeleton key={index} className="h-28" />)}
+          {Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className="h-28" />)}
         </div>
       ) : null}
 
@@ -74,9 +74,8 @@ export function Dashboard() {
         <KpiCard icon={WalletCards} label="Budget remaining" value={formatCurrency(summary.remainingBudget, currency)} tone="indigo" detail={summary.budgetAlert === 'critical' ? 'Critical' : summary.budgetAlert === 'warning' ? 'Keep an eye on this' : 'Looking good'} />
       </div>
 
-      <div className={loading ? 'hidden' : 'mt-5 grid gap-4 sm:grid-cols-3'}>
+      <div className={loading ? 'hidden' : 'mt-5 grid gap-4 sm:grid-cols-2'}>
         <KpiCard icon={ReceiptText} label="Budget used" value={formatPercent(summary.budgetUsedPercent)} tone="indigo" detail={`${formatCurrency(summary.spending, currency)} of ${formatCurrency(summary.budget, currency)}`} compact />
-        <KpiCard icon={Landmark} label="Net worth" value={formatCurrency(summary.netWorth, currency)} tone="purple" compact />
         <KpiCard icon={WalletCards} label="Investments" value={formatCurrency(summary.investmentValue, currency)} tone="success" compact />
       </div>
 
