@@ -4,11 +4,11 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
   return (
     <main className="grid min-h-screen bg-slate-50 lg:grid-cols-[0.9fr_1.1fr]">
       <section className="hidden bg-ink p-10 text-white lg:flex lg:flex-col lg:justify-between">
-        <div className="flex items-center gap-3 text-lg font-semibold">
+        <div className="flex items-center gap-3 text-lg">
           <span className="grid h-11 w-11 place-items-center rounded-lg bg-brand-500">
             <WalletCards size={22} />
           </span>
-          Private Finance
+          <span className="app-wordmark">SaveLah</span>
         </div>
         <div className="max-w-lg">
           <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand-100">Multi-user by design</p>
@@ -26,7 +26,7 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
               <span className="grid h-10 w-10 place-items-center rounded-lg bg-brand-500 text-white">
                 <WalletCards size={20} />
               </span>
-              <span className="font-semibold">Private Finance</span>
+              <span className="app-wordmark">SaveLah</span>
             </div>
             <h1 className="text-2xl font-semibold text-ink">{title}</h1>
             <p className="mt-2 text-sm text-slate-600">{subtitle}</p>

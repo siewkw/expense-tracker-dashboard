@@ -24,7 +24,7 @@ export function Login() {
   }
 
   return (
-    <AuthLayout title="Welcome back" subtitle="Log in to your private finance workspace.">
+    <AuthLayout title="Welcome back" subtitle="Log in to start saving and you will be the next millionaire.">
       <form onSubmit={submit} className="space-y-4">
         <Field label="Email">
           <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
