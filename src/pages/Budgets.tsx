@@ -89,11 +89,11 @@ export function Budgets() {
     <>
       <PageHeader title="Budgets" description={`Manage monthly and category budgets for ${currentMonthLabel}.`} />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Monthly budget" value={formatCurrency(summary.budget, currency)} detail={summary.monthlyBudget ? 'Custom monthly limit' : 'Using category total'} />
-        <StatCard label="Spent" value={formatCurrency(summary.spending, currency)} />
-        <StatCard label="Remaining budget" value={formatCurrency(summary.remainingBudget, currency)} />
-        <StatCard label="Percentage used" value={formatPercent(summary.budgetUsedPercent)} detail={alert.label} />
+      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 xl:grid-cols-4">
+        <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Monthly budget" value={formatCurrency(summary.budget, currency)} detail={summary.monthlyBudget ? 'Custom monthly limit' : 'Using category total'} /></div>
+        <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Spent" value={formatCurrency(summary.spending, currency)} /></div>
+        <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Remaining budget" value={formatCurrency(summary.remainingBudget, currency)} /></div>
+        <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Percentage used" value={formatPercent(summary.budgetUsedPercent)} detail={alert.label} /></div>
       </div>
 
       <Card className={`mt-4 ${alert.bg}`}>
@@ -173,17 +173,19 @@ export function Budgets() {
 
       <Card className="mt-6">
         <h2 className="mb-4 font-semibold text-ink">Budget Usage Chart</h2>
-        <div className="h-80">
-          <ResponsiveContainer>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="category" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip formatter={(value) => formatCurrency(Number(value), currency)} />
-              <Bar dataKey="budget" fill="#94a3b8" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="spent" fill="#18a46f" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="overflow-x-auto pb-2">
+          <div className="h-72 min-w-[560px] sm:h-80 sm:min-w-0">
+            <ResponsiveContainer>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="category" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip formatter={(value) => formatCurrency(Number(value), currency)} />
+                <Bar dataKey="budget" fill="#94a3b8" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="spent" fill="#18a46f" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </Card>
     </>

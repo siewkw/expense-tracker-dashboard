@@ -31,11 +31,11 @@ export function Reports() {
         </div>
       ) : null}
 
-      <div className={loading ? 'hidden' : 'grid gap-4 sm:grid-cols-2 xl:grid-cols-4'}>
-        <StatCard label="Cash flow" value={formatCurrency(summary.income - summary.spending, currency)} />
-        <StatCard label="Savings rate" value={formatPercent(summary.savingsRate)} />
-        <StatCard label="Budget used" value={formatPercent(summary.budgetUsedPercent)} detail={`${formatCurrency(summary.spending, currency)} of ${formatCurrency(summary.budget, currency)}`} />
-        <StatCard label="Largest category" value={byCategory[0]?.category ?? 'No expenses'} detail={byCategory[0] ? formatCurrency(byCategory[0].amount, currency) : undefined} />
+      <div className={loading ? 'hidden' : '-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 xl:grid-cols-4'}>
+        <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Cash flow" value={formatCurrency(summary.income - summary.spending, currency)} /></div>
+        <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Savings rate" value={formatPercent(summary.savingsRate)} /></div>
+        <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Budget used" value={formatPercent(summary.budgetUsedPercent)} detail={`${formatCurrency(summary.spending, currency)} of ${formatCurrency(summary.budget, currency)}`} /></div>
+        <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Largest category" value={byCategory[0]?.category ?? 'No expenses'} detail={byCategory[0] ? formatCurrency(byCategory[0].amount, currency) : undefined} /></div>
       </div>
 
       <Card className={loading ? 'hidden' : 'mt-6'}>
@@ -76,16 +76,18 @@ export function Reports() {
 
       <Card className={loading ? 'hidden' : 'mt-6'}>
         <h2 className="mb-4 font-semibold text-ink">Spending by category</h2>
-        <div className="h-96">
-          <ResponsiveContainer>
-            <BarChart data={byCategory}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="category" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip formatter={(value) => formatCurrency(Number(value), currency)} />
-              <Bar dataKey="amount" fill="#18a46f" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="overflow-x-auto pb-2">
+          <div className="h-72 min-w-[560px] sm:h-96 sm:min-w-0">
+            <ResponsiveContainer>
+              <BarChart data={byCategory}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="category" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip formatter={(value) => formatCurrency(Number(value), currency)} />
+                <Bar dataKey="amount" fill="#18a46f" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </Card>
 

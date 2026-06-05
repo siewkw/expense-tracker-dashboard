@@ -32,20 +32,20 @@ export function Dashboard() {
         </div>
       ) : null}
 
-      <div className={loading ? 'hidden' : 'grid gap-4 sm:grid-cols-2 xl:grid-cols-4'}>
-        <StatCard label="Income" value={formatCurrency(summary.income, currency)} />
-        <StatCard label="Spending" value={formatCurrency(summary.spending, currency)} />
-        <StatCard label="Budget overview" value={formatPercent(summary.budgetUsedPercent)} detail={`${formatCurrency(summary.spending, currency)} of ${formatCurrency(summary.budget, currency)}`} />
-        <StatCard label="Remaining budget" value={formatCurrency(summary.remainingBudget, currency)} detail={summary.budgetAlert === 'critical' ? 'Critical' : summary.budgetAlert === 'warning' ? 'Warning' : 'On track'} />
-        <StatCard label="Savings rate" value={formatPercent(summary.savingsRate)} />
-        <StatCard label="Net worth" value={formatCurrency(summary.netWorth, currency)} />
-        <StatCard label="Investment value" value={formatCurrency(summary.investmentValue, currency)} />
+      <div className={loading ? 'hidden' : '-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 xl:grid-cols-4'}>
+        <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Income" value={formatCurrency(summary.income, currency)} /></div>
+        <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Spending" value={formatCurrency(summary.spending, currency)} /></div>
+        <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Budget overview" value={formatPercent(summary.budgetUsedPercent)} detail={`${formatCurrency(summary.spending, currency)} of ${formatCurrency(summary.budget, currency)}`} /></div>
+        <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Remaining budget" value={formatCurrency(summary.remainingBudget, currency)} detail={summary.budgetAlert === 'critical' ? 'Critical' : summary.budgetAlert === 'warning' ? 'Warning' : 'On track'} /></div>
+        <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Savings rate" value={formatPercent(summary.savingsRate)} /></div>
+        <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Net worth" value={formatCurrency(summary.netWorth, currency)} /></div>
+        <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Investment value" value={formatCurrency(summary.investmentValue, currency)} /></div>
       </div>
 
       <div className={loading ? 'hidden' : 'mt-6 grid gap-4 xl:grid-cols-[0.9fr_1.1fr]'}>
         <Card>
           <h2 className="mb-4 font-semibold text-ink">Budget Usage Chart</h2>
-          <div className="h-72">
+          <div className="h-60 sm:h-72">
             <ResponsiveContainer>
               <BarChart data={[{ name: 'Budget', spent: summary.spending, remaining: summary.remainingBudget }]}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -87,7 +87,7 @@ export function Dashboard() {
       <div className={loading ? 'hidden' : 'mt-6 grid gap-4 xl:grid-cols-[1.4fr_0.8fr]'}>
         <Card>
           <h2 className="mb-4 font-semibold text-ink">Spending trend</h2>
-          <div className="h-72">
+          <div className="h-60 sm:h-72">
             <ResponsiveContainer>
               <LineChart data={trend}>
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
@@ -102,7 +102,7 @@ export function Dashboard() {
         </Card>
         <Card>
           <h2 className="mb-4 font-semibold text-ink">Category breakdown</h2>
-          <div className="h-72">
+          <div className="h-60 sm:h-72">
             <ResponsiveContainer>
               <PieChart>
                 <Pie data={categoryChart} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} paddingAngle={2}>
@@ -120,7 +120,19 @@ export function Dashboard() {
 
       <Card className={loading ? 'hidden' : 'mt-6'}>
         <h2 className="mb-4 font-semibold text-ink">Recent transactions</h2>
-        <div className="overflow-x-auto">
+        <div className="space-y-3 sm:hidden">
+          {transactions.map((transaction) => (
+            <article key={transaction.id} className="flex items-start justify-between gap-3 rounded-md border border-line p-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-ink">{transaction.merchant ?? transaction.category}</p>
+                <p className="mt-1 text-xs text-slate-500">{transaction.occurred_on} - {transaction.category}</p>
+                <p className="mt-1 text-xs text-slate-500">{transaction.payment_method ?? '-'}</p>
+              </div>
+              <p className="shrink-0 text-sm font-semibold text-ink">{formatCurrency(transaction.amount, currency)}</p>
+            </article>
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[680px] text-left text-sm">
             <thead className="border-b border-line text-slate-500">
               <tr>

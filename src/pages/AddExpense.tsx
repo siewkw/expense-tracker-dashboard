@@ -72,46 +72,78 @@ export function AddExpense() {
 
   return (
     <>
-      <PageHeader title="Add Expense" description="Capture a private transaction under your user account." />
-      <Card className="max-w-3xl">
-        <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
-          <Field label="Date">
-            <Input className="py-3 text-base" type="date" value={form.occurred_on} onChange={(event) => setForm({ ...form, occurred_on: event.target.value })} required />
-          </Field>
-          <Field label="Amount">
-            <Input className="py-3 text-base" type="number" min="0.01" step="0.01" inputMode="decimal" value={form.amount} onChange={(event) => setForm({ ...form, amount: event.target.value })} required />
-          </Field>
-          <Field label="Category">
-            <Select className="py-3 text-base" value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })}>
-              {activeCategories.map((category) => <option key={category.id}>{category.name}</option>)}
-            </Select>
-          </Field>
-          <Field label="Payment method">
-            <Select className="py-3 text-base" value={form.payment_method} onChange={(event) => setForm({ ...form, payment_method: event.target.value })}>
-              {PAYMENT_METHODS.map((method) => <option key={method}>{method}</option>)}
-            </Select>
-          </Field>
-          <Field label="Merchant">
-            <Input className="py-3 text-base" list="add-expense-recent-merchants" value={form.merchant} onChange={(event) => setForm({ ...form, merchant: event.target.value })} />
-          </Field>
-          <Field label="Tags">
-            <Input className="py-3 text-base" placeholder="comma, separated, tags" value={form.tags} onChange={(event) => setForm({ ...form, tags: event.target.value })} />
-          </Field>
-          <div className="sm:col-span-2">
+      <PageHeader title="Add Expense" description="Amount, merchant, category, save." />
+      <Card className="mx-auto max-w-3xl">
+        <form onSubmit={submit} className="grid gap-4 pb-20 sm:grid-cols-2 sm:pb-0">
+          <div className="order-1 sm:order-none">
+            <Field label="Amount">
+              <Input
+                className="py-3 text-lg font-semibold"
+                type="number"
+                min="0.01"
+                step="0.01"
+                inputMode="decimal"
+                enterKeyHint="next"
+                autoFocus
+                value={form.amount}
+                onChange={(event) => setForm({ ...form, amount: event.target.value })}
+                placeholder="0.00"
+                required
+              />
+            </Field>
+          </div>
+          <div className="order-2 sm:order-none">
+            <Field label="Merchant">
+              <Input
+                className="py-3 text-base"
+                list="add-expense-recent-merchants"
+                enterKeyHint="next"
+                autoComplete="organization"
+                value={form.merchant}
+                onChange={(event) => setForm({ ...form, merchant: event.target.value })}
+                placeholder="Where did you spend?"
+              />
+            </Field>
+          </div>
+          <div className="order-3 sm:order-none">
+            <Field label="Category">
+              <Select className="py-3 text-base" value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })}>
+                {activeCategories.map((category) => <option key={category.id}>{category.name}</option>)}
+              </Select>
+            </Field>
+          </div>
+          <div className="order-4 sm:order-none">
+            <Field label="Payment method">
+              <Select className="py-3 text-base" value={form.payment_method} onChange={(event) => setForm({ ...form, payment_method: event.target.value })}>
+                {PAYMENT_METHODS.map((method) => <option key={method}>{method}</option>)}
+              </Select>
+            </Field>
+          </div>
+          <div className="order-5 sm:order-none">
+            <Field label="Date">
+              <Input className="py-3 text-base" type="date" value={form.occurred_on} onChange={(event) => setForm({ ...form, occurred_on: event.target.value })} required />
+            </Field>
+          </div>
+          <div className="order-6 sm:order-none">
+            <Field label="Tags">
+              <Input className="py-3 text-base" placeholder="comma, separated, tags" value={form.tags} onChange={(event) => setForm({ ...form, tags: event.target.value })} />
+            </Field>
+          </div>
+          <div className="order-7 sm:order-none sm:col-span-2">
             <Field label="Notes">
-              <TextArea className="text-base" rows={4} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
+              <TextArea className="text-base" rows={3} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
             </Field>
           </div>
           <datalist id="add-expense-recent-merchants">
             {recentMerchants.map((merchant) => <option key={merchant} value={merchant} />)}
           </datalist>
           {recentMerchants.length > 0 ? (
-            <div className="sm:col-span-2 flex flex-wrap gap-2">
+            <div className="order-2 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:order-none sm:col-span-2 sm:flex-wrap sm:overflow-visible">
               {recentMerchants.slice(0, 6).map((merchant) => (
                 <button
                   key={merchant}
                   type="button"
-                  className="rounded-md border border-line bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="min-h-11 shrink-0 rounded-md border border-line bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   onClick={() => setForm((current) => ({ ...current, merchant }))}
                 >
                   {merchant}
@@ -119,8 +151,8 @@ export function AddExpense() {
               ))}
             </div>
           ) : null}
-          {message ? <p className="sm:col-span-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{message}</p> : null}
-          <div className="sm:col-span-2">
+          {message ? <p className="order-8 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 sm:order-none sm:col-span-2">{message}</p> : null}
+          <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-line bg-white/95 p-3 backdrop-blur sm:static sm:order-none sm:col-span-2 sm:border-0 sm:bg-transparent sm:p-0">
             <Button className="min-h-12 w-full text-base sm:w-auto" type="submit" disabled={saving || activeCategories.length === 0}>
               <Save size={16} />
               {saving ? 'Saving...' : 'Save expense'}
