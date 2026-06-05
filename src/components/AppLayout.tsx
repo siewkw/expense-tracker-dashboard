@@ -39,7 +39,7 @@ export function AppLayout() {
             <BarChart3 size={20} />
           </span>
           <div>
-            <p className="font-semibold text-ink">Finance OS</p>
+            <p className="font-semibold text-ink">SaveLah</p>
             <p className="text-xs text-slate-500">{user?.email}</p>
           </div>
         </div>
@@ -74,7 +74,7 @@ export function AppLayout() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 font-semibold">
               <CircleDollarSign className="text-brand-600" size={22} />
-              Finance OS
+              SaveLah
             </div>
             <button
               onClick={() => setMenuOpen(true)}
@@ -94,7 +94,7 @@ export function AppLayout() {
             >
               <div className="mb-5 flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-ink">Finance OS</p>
+                  <p className="font-semibold text-ink">SaveLah</p>
                   <p className="max-w-60 truncate text-xs text-slate-500">{user?.email}</p>
                 </div>
                 <button

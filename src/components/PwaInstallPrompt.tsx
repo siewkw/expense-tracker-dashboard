@@ -74,7 +74,7 @@ export function PwaInstallPrompt() {
         <X size={18} />
       </button>
       <div className="pr-10">
-        <p className="font-semibold text-ink">Install Finance OS</p>
+        <p className="font-semibold text-ink">Install SaveLah</p>
         <p className="mt-1 text-sm text-slate-600">Open your finance dashboard faster in a standalone app window.</p>
       </div>
       {showIosHelp ? (

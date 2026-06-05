@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'finance-os-v2';
+const CACHE_VERSION = 'savelah-v3';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const APP_SHELL = [
@@ -34,7 +34,7 @@ self.addEventListener('activate', (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key.startsWith('finance-os-') && ![APP_SHELL_CACHE, STATIC_CACHE].includes(key))
+            .filter((key) => (key.startsWith('finance-os-') || key.startsWith('savelah-')) && ![APP_SHELL_CACHE, STATIC_CACHE].includes(key))
             .map((key) => caches.delete(key)),
         ),
       )

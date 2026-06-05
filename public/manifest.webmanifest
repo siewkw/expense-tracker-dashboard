@@ -1,6 +1,6 @@
 {
-  "name": "Finance OS",
-  "short_name": "Finance OS",
+  "name": "SaveLah",
+  "short_name": "SaveLah",
   "description": "A private multi-user personal finance dashboard.",
   "start_url": "/",
   "scope": "/",
