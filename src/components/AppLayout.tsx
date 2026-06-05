@@ -39,7 +39,7 @@ export function AppLayout() {
             <BarChart3 size={20} />
           </span>
           <div>
-            <p className="font-semibold text-ink">SaveLah</p>
+            <p className="app-wordmark text-ink">SaveLah</p>
             <p className="text-xs text-slate-500">{user?.email}</p>
           </div>
         </div>
@@ -72,9 +72,9 @@ export function AppLayout() {
       <div className="lg:pl-64">
         <header className="sticky top-0 z-30 border-b border-line bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 font-semibold">
+            <div className="flex items-center gap-2">
               <CircleDollarSign className="text-brand-600" size={22} />
-              SaveLah
+              <span className="app-wordmark">SaveLah</span>
             </div>
             <button
               onClick={() => setMenuOpen(true)}
@@ -94,7 +94,7 @@ export function AppLayout() {
             >
               <div className="mb-5 flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-ink">SaveLah</p>
+                  <p className="app-wordmark text-ink">SaveLah</p>
                   <p className="max-w-60 truncate text-xs text-slate-500">{user?.email}</p>
                 </div>
                 <button

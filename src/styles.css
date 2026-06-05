@@ -36,6 +36,11 @@ textarea {
   max-width: 100%;
 }
 
+.app-wordmark {
+  font-family: "Sora", Inter, ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+}
+
 @supports (padding: max(0px)) {
   body {
     padding-left: env(safe-area-inset-left);
