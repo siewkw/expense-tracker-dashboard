@@ -68,7 +68,7 @@ export function PwaInstallPrompt() {
       <button
         type="button"
         onClick={dismiss}
-        className="absolute right-2 top-2 grid h-10 w-10 place-items-center rounded-md text-slate-500 hover:bg-slate-100"
+        className="absolute right-2 top-2 grid h-10 w-10 place-items-center rounded-full text-slate-500 transition hover:bg-slate-100"
         aria-label="Dismiss install prompt"
       >
         <X size={18} />
@@ -78,7 +78,7 @@ export function PwaInstallPrompt() {
         <p className="mt-1 text-sm text-slate-600">Open your finance dashboard faster in a standalone app window.</p>
       </div>
       {showIosHelp ? (
-        <div className="mt-4 rounded-md bg-slate-50 p-3 text-sm text-slate-700">
+        <div className="mt-4 rounded-2xl bg-slate-50 p-3 text-sm text-slate-700">
           <p className="flex items-center gap-2 font-medium"><Share2 size={17} /> In Safari, tap Share.</p>
           <p className="mt-2">Then choose <strong>Add to Home Screen</strong> and tap <strong>Add</strong>.</p>
         </div>

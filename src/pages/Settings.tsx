@@ -140,12 +140,13 @@ export function Settings() {
   return (
     <>
       <PageHeader title="Settings" description="Manage profile preferences and user-owned categories." />
-      {message ? <p className="mb-4 rounded-md bg-brand-50 px-3 py-2 text-sm text-brand-700">{message}</p> : null}
+      {message ? <p className="mb-4 rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-700">{message}</p> : null}
 
       <div className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
         <div className="space-y-4">
           <Card>
-            <h2 className="mb-4 font-semibold text-ink">Profile</h2>
+            <h2 className="mb-1 font-sora text-lg font-semibold text-ink">Profile</h2>
+            <p className="mb-5 text-sm text-slate-500">Your personal details and preferred currency.</p>
             <form onSubmit={submit} className="space-y-4">
               <Field label="Email"><Input value={user?.email ?? ''} disabled /></Field>
               <Field label="Full name"><Input value={fullName} onChange={(event) => setFullName(event.target.value)} /></Field>
@@ -154,7 +155,8 @@ export function Settings() {
             </form>
           </Card>
           <Card>
-            <h2 className="mb-4 font-semibold text-ink">Password</h2>
+            <h2 className="mb-1 font-sora text-lg font-semibold text-ink">Password</h2>
+            <p className="mb-5 text-sm text-slate-500">Keep your SaveLah account protected.</p>
             <form onSubmit={updatePassword} className="space-y-4">
               <Field label="New password"><Input type="password" minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} required /></Field>
               <Button type="submit">Update password</Button>
@@ -164,7 +166,7 @@ export function Settings() {
 
         <Card>
           <div className="mb-5">
-            <h2 className="font-semibold text-ink">Category Management</h2>
+            <h2 className="font-sora text-lg font-semibold text-ink">Category Management</h2>
             <p className="mt-1 text-sm text-slate-600">Active categories appear in expense, transaction, budget, report, and chart views.</p>
           </div>
 
@@ -211,7 +213,7 @@ export function Settings() {
 
         <Card className="xl:col-span-2">
           <div className="mb-5">
-            <h2 className="font-semibold text-ink">Merchant Rules</h2>
+            <h2 className="font-sora text-lg font-semibold text-ink">Merchant Rules</h2>
             <p className="mt-1 text-sm text-slate-600">Learned rules override defaults and power future auto-categorization.</p>
           </div>
 
@@ -247,9 +249,10 @@ export function Settings() {
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Default merchant rules</h3>
             <div className="grid gap-2 sm:grid-cols-2">
               {defaultRules.map((rule) => (
-                <div key={rule.id} className="rounded-md bg-slate-50 px-3 py-2 text-sm">
+                <div key={rule.id} className="flex items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm">
                   <span className="font-medium text-ink">{rule.merchant_pattern}</span>
-                  <span className="text-slate-500">{' -> '}{rule.category}</span>
+                  <span className="text-indigo-400">{' → '}</span>
+                  <span className="text-slate-500">{rule.category}</span>
                 </div>
               ))}
             </div>
@@ -289,11 +292,11 @@ function CategoryList({
     <section>
       <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">{title}</h3>
       <div className="space-y-2">
-        {categories.length === 0 ? <p className="rounded-md bg-slate-50 px-3 py-3 text-sm text-slate-600">No categories here.</p> : null}
+        {categories.length === 0 ? <p className="rounded-2xl bg-slate-50 px-4 py-4 text-sm text-slate-600">No categories here.</p> : null}
         {categories.map((category) => {
           const isEditing = editingCategoryId === category.id;
           return (
-            <div key={category.id} className="flex flex-col gap-3 rounded-md border border-line p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div key={category.id} className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 <span className="h-4 w-4 shrink-0 rounded-full" style={{ backgroundColor: isEditing ? editingColor : category.color }} />
                 {isEditing ? (
@@ -363,11 +366,11 @@ function MerchantRuleList({
     <section>
       <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">{title}</h3>
       <div className="space-y-2">
-        {rules.length === 0 ? <p className="rounded-md bg-slate-50 px-3 py-3 text-sm text-slate-600">No learned rules yet. Edit a transaction category or confirm an import suggestion to teach the system.</p> : null}
+        {rules.length === 0 ? <p className="rounded-2xl bg-slate-50 px-4 py-4 text-sm text-slate-600">No learned rules yet. Edit a transaction category or confirm an import suggestion to teach the system.</p> : null}
         {rules.map((rule) => {
           const isEditing = editingRuleId === rule.id;
           return (
-            <div key={rule.id} className="flex flex-col gap-3 rounded-md border border-line p-3 xl:flex-row xl:items-center xl:justify-between">
+            <div key={rule.id} className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-4 xl:flex-row xl:items-center xl:justify-between">
               {isEditing ? (
                 <div className="grid flex-1 gap-2 sm:grid-cols-[1fr_180px]">
                   <Input value={editingRuleMerchant} onChange={(event) => onMerchantChange(event.target.value)} />

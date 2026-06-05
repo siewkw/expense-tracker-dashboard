@@ -32,7 +32,7 @@ export function Login() {
         <Field label="Password">
           <Input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
         </Field>
-        {message ? <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{message}</p> : null}
+        {message ? <p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">{message}</p> : null}
         <Button type="submit" disabled={saving} className="w-full">
           {saving ? 'Logging in...' : 'Login'}
         </Button>

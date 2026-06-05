@@ -40,7 +40,7 @@ export function SignUp() {
         <Field label="Password">
           <Input type="password" minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} required />
         </Field>
-        {message ? <p className="rounded-md bg-brand-50 px-3 py-2 text-sm text-brand-700">{message}</p> : null}
+        {message ? <p className="rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-700">{message}</p> : null}
         <Button type="submit" disabled={saving} className="w-full">
           {saving ? 'Creating...' : 'Sign up'}
         </Button>

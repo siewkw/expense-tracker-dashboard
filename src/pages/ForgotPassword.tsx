@@ -25,7 +25,7 @@ export function ForgotPassword() {
         <Field label="Email">
           <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
         </Field>
-        {message ? <p className="rounded-md bg-brand-50 px-3 py-2 text-sm text-brand-700">{message}</p> : null}
+        {message ? <p className="rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-700">{message}</p> : null}
         <Button type="submit" disabled={saving} className="w-full">
           {saving ? 'Sending...' : 'Send reset link'}
         </Button>

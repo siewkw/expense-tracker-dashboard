@@ -205,11 +205,12 @@ export function Transactions() {
     <>
       <PageHeader title="Transactions" description="Quickly add, search, filter, edit, and delete expenses." />
 
-      <Card className="mb-4">
+      <Card className="mb-4 overflow-hidden border-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <h2 className="font-semibold text-ink">Quick Add Expense</h2>
-            <p className="text-sm text-slate-600">Amount, merchant, category, save. Built for fast mobile entry.</p>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600">Fast entry</p>
+            <h2 className="font-sora text-xl font-semibold text-ink">Quick Add Expense</h2>
+            <p className="mt-1 text-sm text-slate-600">Amount, merchant, category, save. Built for fast mobile entry.</p>
           </div>
         </div>
         <form onSubmit={addExpense} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[130px_130px_1fr_180px_170px_auto]">
@@ -253,7 +254,7 @@ export function Transactions() {
               <button
                 key={merchant}
                 type="button"
-                className="rounded-md border border-line bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-full border border-indigo-100 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:text-indigo-700"
                 onClick={() => setForm((current) => ({ ...current, merchant }))}
               >
                 {merchant}
@@ -263,7 +264,7 @@ export function Transactions() {
         ) : null}
       </Card>
 
-      <Card className="mb-4">
+      <Card className="mb-4 bg-slate-50/70">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_180px_150px_180px]">
           <Field label="Search">
             <div className="relative">
@@ -311,7 +312,7 @@ export function Transactions() {
         ) : null}
         {transactions.length === 0 ? <EmptyState title="No transactions yet" description="Add expenses to populate your dashboard." /> : null}
         {transactions.length > 0 && filteredTransactions.length === 0 ? <EmptyState title="No matching transactions" description="Try a different search, filter, or sort option." /> : null}
-        <div className="space-y-3 lg:hidden">
+        <div className="grid gap-3 xl:grid-cols-2">
           {filteredTransactions.map((transaction) => (
             <MobileTransactionCard
               key={transaction.id}
@@ -327,59 +328,6 @@ export function Transactions() {
               onSave={saveEdit}
             />
           ))}
-        </div>
-        <div className="hidden overflow-x-auto lg:block">
-          <table className="w-full min-w-[980px] text-left text-sm">
-            <thead className="border-b border-line text-slate-500">
-              <tr>
-                <th className="py-2">Date</th>
-                <th>Type</th>
-                <th>Category</th>
-                <th>Merchant</th>
-                <th>Payment</th>
-                <th>Notes</th>
-                <th className="text-right">Amount</th>
-                <th className="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTransactions.map((transaction) =>
-                editingId === transaction.id ? (
-                  <tr key={transaction.id} className="border-b border-slate-100 bg-slate-50">
-                    <td colSpan={8} className="py-3">
-                      <EditExpenseForm
-                        form={editingForm}
-                        activeCategories={activeCategories}
-                        setForm={setEditingForm}
-                        onCancel={() => setEditingId(null)}
-                        onSave={saveEdit}
-                      />
-                    </td>
-                  </tr>
-                ) : (
-                  <tr key={transaction.id} className="border-b border-slate-100">
-                    <td className="py-3">{transaction.occurred_on}</td>
-                    <td className="capitalize">{transaction.type}</td>
-                    <td>{transaction.category}</td>
-                    <td>{transaction.merchant ?? '-'}</td>
-                    <td>{transaction.payment_method ?? '-'}</td>
-                    <td className="max-w-56 truncate">{transaction.notes ?? '-'}</td>
-                    <td className="text-right font-medium">{formatCurrency(transaction.amount, currency)}</td>
-                    <td className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button type="button" className="bg-slate-700 px-3 hover:bg-slate-800" onClick={() => startEditing(transaction)} aria-label="Edit transaction">
-                          <Pencil size={15} />
-                        </Button>
-                        <Button type="button" className="bg-red-600 px-3 hover:bg-red-700" onClick={() => remove(transaction.id)} aria-label="Delete transaction">
-                          <Trash2 size={15} />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ),
-              )}
-            </tbody>
-          </table>
         </div>
         {hasMore ? (
           <div className="mt-4 flex justify-center">
@@ -457,21 +405,21 @@ function MobileTransactionCard({
 }) {
   if (isEditing) {
     return (
-      <div className="rounded-lg border border-line bg-slate-50 p-3">
+      <div className="rounded-[20px] border border-indigo-100 bg-indigo-50/60 p-4">
         <EditExpenseForm form={editingForm} activeCategories={activeCategories} setForm={setEditingForm} onCancel={onCancel} onSave={onSave} />
       </div>
     );
   }
 
   return (
-    <article className="rounded-lg border border-line bg-white p-4">
+    <article className="group rounded-[20px] border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_32px_rgba(79,70,229,0.09)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate font-semibold text-ink">{transaction.merchant ?? transaction.category}</p>
-          <p className="mt-1 text-sm text-slate-500">{transaction.occurred_on} · {transaction.category}</p>
+          <p className="truncate font-sora font-semibold text-ink">{transaction.merchant ?? transaction.category}</p>
+          <p className="mt-1 text-sm text-slate-500">{transaction.occurred_on} · <span className="font-medium text-indigo-600">{transaction.category}</span></p>
           <p className="mt-1 text-sm text-slate-500">{transaction.payment_method ?? '-'} · <span className="capitalize">{transaction.type}</span></p>
         </div>
-        <p className="shrink-0 font-semibold text-ink">{formatCurrency(transaction.amount, currency)}</p>
+        <p className={`shrink-0 font-sora font-semibold ${transaction.type === 'income' ? 'text-emerald-600' : 'text-ink'}`}>{formatCurrency(transaction.amount, currency)}</p>
       </div>
       {transaction.notes ? <p className="mt-3 text-sm text-slate-600">{transaction.notes}</p> : null}
       <div className="mt-4 grid grid-cols-2 gap-2">

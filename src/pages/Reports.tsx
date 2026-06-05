@@ -39,7 +39,8 @@ export function Reports() {
       </div>
 
       <Card className={loading ? 'hidden' : 'mt-6'}>
-        <h2 className="mb-4 font-semibold text-ink">Monthly Budget Report</h2>
+        <h2 className="font-sora text-lg font-semibold text-ink">Monthly Budget Report</h2>
+        <p className="mb-5 mt-1 text-sm text-slate-500">A simple pulse check on your plan and remaining room.</p>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="border-b border-line text-slate-500">
@@ -75,7 +76,8 @@ export function Reports() {
       </Card>
 
       <Card className={loading ? 'hidden' : 'mt-6'}>
-        <h2 className="mb-4 font-semibold text-ink">Spending by category</h2>
+        <h2 className="font-sora text-lg font-semibold text-ink">Spending by category</h2>
+        <p className="mb-5 mt-1 text-sm text-slate-500">See where your money gathered during this period.</p>
         <div className="overflow-x-auto pb-2">
           <div className="h-72 min-w-[560px] sm:h-96 sm:min-w-0">
             <ResponsiveContainer>
@@ -84,7 +86,7 @@ export function Reports() {
                 <XAxis dataKey="category" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip formatter={(value) => formatCurrency(Number(value), currency)} />
-                <Bar dataKey="amount" fill="#18a46f" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="amount" fill="#6366F1" radius={[10, 10, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -92,7 +94,8 @@ export function Reports() {
       </Card>
 
       <Card className={loading ? 'hidden' : 'mt-6'}>
-        <h2 className="mb-4 font-semibold text-ink">Overspending Report</h2>
+        <h2 className="font-sora text-lg font-semibold text-ink">Overspending Report</h2>
+        <p className="mb-5 mt-1 text-sm text-slate-500">Categories that moved beyond their planned limit.</p>
         {overspending.length === 0 ? (
           <p className="text-sm text-slate-600">No categories are over budget for the selected period.</p>
         ) : (

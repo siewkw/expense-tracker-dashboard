@@ -143,7 +143,7 @@ export function AddExpense() {
                 <button
                   key={merchant}
                   type="button"
-                  className="min-h-11 shrink-0 rounded-md border border-line bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="min-h-11 shrink-0 rounded-full border border-indigo-100 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700"
                   onClick={() => setForm((current) => ({ ...current, merchant }))}
                 >
                   {merchant}
@@ -151,7 +151,7 @@ export function AddExpense() {
               ))}
             </div>
           ) : null}
-          {message ? <p className="order-8 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 sm:order-none sm:col-span-2">{message}</p> : null}
+          {message ? <p className="order-8 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 sm:order-none sm:col-span-2">{message}</p> : null}
           <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-line bg-white/95 p-3 backdrop-blur sm:static sm:order-none sm:col-span-2 sm:border-0 sm:bg-transparent sm:p-0">
             <Button className="min-h-12 w-full text-base sm:w-auto" type="submit" disabled={saving || activeCategories.length === 0}>
               <Save size={16} />
