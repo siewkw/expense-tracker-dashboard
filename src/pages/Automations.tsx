@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, CalendarDays, CheckCircle2, HeartPulse, PiggyBank, ReceiptText, Repeat, TrendingUp } from 'lucide-react';
+import { AlertTriangle, CalendarDays, CheckCircle2, HeartPulse, Pause, PiggyBank, Play, ReceiptText, Repeat, Trash2, TrendingUp } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Card, ErrorMessage, PageHeader, Skeleton, StatCard } from '../components/ui';
@@ -16,7 +16,7 @@ import {
   topCategories,
 } from '../lib/automations';
 import { currentMonthDate, formatCurrency, formatPercent } from '../lib/format';
-import type { BiggestTransaction, RecurringSubscription, SpendingAnomaly } from '../types/database';
+import type { BiggestTransaction, RecurringExpense, RecurringSubscription, SpendingAnomaly } from '../types/database';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -28,6 +28,7 @@ export function Automations() {
   const month = useFinanceData({ startDate: monthStart, endDate: todayDate, recentTransactionLimit: 0 });
   const week = useFinanceData({ startDate: weekStart, endDate: weekEnd, recentTransactionLimit: 0, includeWealth: false });
   const [subscriptions, setSubscriptions] = useState<RecurringSubscription[]>([]);
+  const [scheduledSubscriptions, setScheduledSubscriptions] = useState<RecurringExpense[]>([]);
   const [anomalies, setAnomalies] = useState<SpendingAnomaly[]>([]);
   const [biggestWeekTransactions, setBiggestWeekTransactions] = useState<BiggestTransaction[]>([]);
   const [automationLoading, setAutomationLoading] = useState(true);
@@ -42,14 +43,19 @@ export function Automations() {
     async function loadAutomations() {
       setAutomationLoading(true);
       setAutomationError('');
-      const [subscriptionResult, anomalyResult, biggestResult] = await Promise.all([
+      const [subscriptionResult, scheduledResult, anomalyResult, biggestResult] = await Promise.all([
         supabase.rpc('get_recurring_subscriptions', { p_months: 6 }),
+        supabase
+          .from('recurring_expenses')
+          .select('id,user_id,merchant,amount,category,category_id,day_of_month,start_month,payment_method,notes,tags,is_active,last_generated_month,created_at,updated_at')
+          .order('is_active', { ascending: false })
+          .order('day_of_month', { ascending: true }),
         supabase.rpc('get_spending_anomalies', { p_start_date: monthStart, p_end_date: todayDate, p_baseline_months: 3 }),
         supabase.rpc('get_biggest_transactions', { p_start_date: weekStart, p_end_date: weekEnd, p_limit: 5 }),
       ]);
 
       if (!active) return;
-      const failure = [subscriptionResult, anomalyResult, biggestResult].find((result) => result.error);
+      const failure = [subscriptionResult, scheduledResult, anomalyResult, biggestResult].find((result) => result.error);
       if (failure?.error) {
         setAutomationError(failure.error.message);
         setAutomationLoading(false);
@@ -57,6 +63,7 @@ export function Automations() {
       }
 
       setSubscriptions((subscriptionResult.data ?? []).map((item) => ({ ...item, average_amount: Number(item.average_amount), confidence: Number(item.confidence), cadence_days: item.cadence_days === null ? null : Number(item.cadence_days), occurrences: Number(item.occurrences) })));
+      setScheduledSubscriptions((scheduledResult.data ?? []).map((item) => ({ ...item, amount: Number(item.amount), day_of_month: Number(item.day_of_month) })) as RecurringExpense[]);
       setAnomalies((anomalyResult.data ?? []).map((item) => ({ ...item, current_spending: Number(item.current_spending), baseline_monthly_average: Number(item.baseline_monthly_average), difference: Number(item.difference), variance_percent: Number(item.variance_percent) })));
       setBiggestWeekTransactions((biggestResult.data ?? []).map((item) => ({ ...item, amount: Number(item.amount) })));
       setAutomationLoading(false);
@@ -96,6 +103,29 @@ export function Automations() {
     today: todayDate,
   });
   const subscriptionTotal = subscriptions.reduce((sum, item) => sum + item.average_amount, 0);
+  const scheduledTotal = scheduledSubscriptions.filter((item) => item.is_active).reduce((sum, item) => sum + item.amount, 0);
+
+  async function toggleScheduledSubscription(schedule: RecurringExpense) {
+    const { error: updateError } = await supabase
+      .from('recurring_expenses')
+      .update({ is_active: !schedule.is_active })
+      .eq('id', schedule.id);
+    if (updateError) {
+      setAutomationError(updateError.message);
+      return;
+    }
+    setScheduledSubscriptions((current) => current.map((item) => item.id === schedule.id ? { ...item, is_active: !item.is_active } : item));
+  }
+
+  async function deleteScheduledSubscription(schedule: RecurringExpense) {
+    if (!window.confirm(`Delete the monthly subscription "${schedule.merchant}"? Existing transactions will remain.`)) return;
+    const { error: deleteError } = await supabase.from('recurring_expenses').delete().eq('id', schedule.id);
+    if (deleteError) {
+      setAutomationError(deleteError.message);
+      return;
+    }
+    setScheduledSubscriptions((current) => current.filter((item) => item.id !== schedule.id));
+  }
 
   return (
     <>
@@ -111,11 +141,57 @@ export function Automations() {
       ) : null}
 
       <div className={loading ? 'hidden' : 'grid gap-4 sm:grid-cols-2 xl:grid-cols-4'}>
+        <StatCard label="Scheduled monthly" value={String(scheduledSubscriptions.filter((item) => item.is_active).length)} detail={formatCurrency(scheduledTotal, currency)} />
         <StatCard label="Detected subscriptions" value={String(subscriptions.length)} detail={formatCurrency(subscriptionTotal, currency)} />
         <StatCard label="Anomaly alerts" value={String(anomalies.length)} detail={anomalies.length > 0 ? 'Review spending spikes' : 'No spikes found'} />
         <StatCard label="Financial health" value={`${health.score}/100`} detail={health.status} />
-        <StatCard label="Budget risk" value={budgetRisk.risk === 'none' ? 'Setup needed' : budgetRisk.risk} detail={budgetRisk.detail} />
       </div>
+
+      <Card className={loading ? 'hidden' : 'mt-6'}>
+        <SectionTitle icon={CalendarDays} title="Scheduled Monthly Subscriptions" />
+        <p className="mb-4 text-sm text-slate-500">Created from Add Expense. Charges are added when you next open SaveLah on or after their monthly date.</p>
+        {scheduledSubscriptions.length === 0 ? (
+          <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">No automatic subscriptions yet. Switch on Repeat this expense monthly when adding an expense.</p>
+        ) : (
+          <div className="grid gap-3 lg:grid-cols-2">
+            {scheduledSubscriptions.map((schedule) => (
+              <article key={schedule.id} className="rounded-[20px] border border-slate-200 bg-slate-50/60 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="truncate font-sora font-semibold text-ink">{schedule.merchant}</p>
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${schedule.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+                        {schedule.is_active ? 'Active' : 'Paused'}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm text-slate-500">{schedule.category} · day {schedule.day_of_month} each month</p>
+                    <p className="mt-1 text-xs text-slate-400">Starts {schedule.start_month.slice(0, 7)} · {schedule.payment_method}</p>
+                  </div>
+                  <p className="shrink-0 font-sora font-semibold text-ink">{formatCurrency(schedule.amount, currency)}</p>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100"
+                    onClick={() => toggleScheduledSubscription(schedule)}
+                  >
+                    {schedule.is_active ? <Pause size={16} /> : <Play size={16} />}
+                    {schedule.is_active ? 'Pause' : 'Resume'}
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-red-600 px-3 text-sm font-semibold text-white transition hover:bg-red-700"
+                    onClick={() => deleteScheduledSubscription(schedule)}
+                  >
+                    <Trash2 size={16} />
+                    Delete
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </Card>
 
       <div className={loading ? 'hidden' : 'mt-6 grid gap-4 xl:grid-cols-[1fr_1fr]'}>
         <Card>

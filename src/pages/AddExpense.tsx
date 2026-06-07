@@ -1,7 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
-import { Save } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { CalendarClock, Save } from 'lucide-react';
 import { Button, Card, Field, Input, PageHeader, Select, TextArea } from '../components/ui';
 import { PAYMENT_METHODS } from '../constants/finance';
 import { supabase } from '../lib/supabase';
@@ -14,6 +13,8 @@ export function AddExpense() {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [repeatMonthly, setRepeatMonthly] = useState(false);
+  const [recurringDay, setRecurringDay] = useState(String(new Date().getDate()));
   const [form, setForm] = useState({
     occurred_on: new Date().toISOString().slice(0, 10),
     amount: '',
@@ -50,24 +51,54 @@ export function AddExpense() {
     setSaving(true);
     setMessage('');
 
+    const selectedCategory = activeCategories.find((category) => category.name === form.category);
+    const tags = form.tags.split(',').map((tag) => tag.trim()).filter(Boolean);
     const { error } = await supabase.from('transactions').insert({
       user_id: user.id,
       occurred_on: form.occurred_on,
       amount: Number(form.amount),
       type: 'expense',
       category: form.category,
-      category_id: activeCategories.find((category) => category.name === form.category)?.id ?? null,
+      category_id: selectedCategory?.id ?? null,
       merchant: form.merchant || null,
       payment_method: form.payment_method,
       notes: form.notes || null,
-      tags: form.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
+      tags,
+      recurring_income_id: null,
+      recurring_expense_id: null,
     });
 
-    setSaving(false);
     if (error) {
+      setSaving(false);
       setMessage(error.message);
       return;
     }
+
+    if (repeatMonthly) {
+      const [year, month] = form.occurred_on.split('-').map(Number);
+      const nextMonth = new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10);
+      const { error: scheduleError } = await supabase.from('recurring_expenses').insert({
+        user_id: user.id,
+        merchant: form.merchant.trim() || form.category,
+        amount: Number(form.amount),
+        category: form.category,
+        category_id: selectedCategory?.id ?? null,
+        day_of_month: Number(recurringDay),
+        start_month: nextMonth,
+        payment_method: form.payment_method,
+        notes: form.notes.trim() || null,
+        tags,
+        is_active: true,
+      });
+
+      if (scheduleError) {
+        setSaving(false);
+        setMessage(`Expense saved, but the monthly schedule could not be created: ${scheduleError.message}`);
+        return;
+      }
+    }
+
+    setSaving(false);
     navigate('/transactions');
   }
 
@@ -139,6 +170,40 @@ export function AddExpense() {
               <TextArea className="text-base" rows={3} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
             </Field>
           </div>
+          <div className="order-8 rounded-[20px] border border-indigo-100 bg-indigo-50/70 p-4 sm:order-none sm:col-span-2">
+            <label className="flex cursor-pointer items-start justify-between gap-4">
+              <span className="flex items-start gap-3">
+                <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white text-indigo-600 shadow-sm">
+                  <CalendarClock size={19} />
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold text-ink">Repeat this expense monthly</span>
+                  <span className="mt-1 block text-sm text-slate-500">Log this expense now, then add it automatically each month.</span>
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                className="mt-2 h-5 w-5 accent-indigo-600"
+                checked={repeatMonthly}
+                onChange={(event) => setRepeatMonthly(event.target.checked)}
+              />
+            </label>
+            {repeatMonthly ? (
+              <div className="mt-4 max-w-xs">
+                <Field label="Repeat on day">
+                  <Input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={recurringDay}
+                    onChange={(event) => setRecurringDay(event.target.value)}
+                    required
+                  />
+                </Field>
+                <p className="mt-2 text-xs text-slate-500">For shorter months, SaveLah uses the final day of the month.</p>
+              </div>
+            ) : null}
+          </div>
           <datalist id="add-expense-recent-merchants">
             {recentMerchants.map((merchant) => <option key={merchant} value={merchant} />)}
           </datalist>
@@ -156,7 +221,7 @@ export function AddExpense() {
               ))}
             </div>
           ) : null}
-          {message ? <p className="order-8 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 sm:order-none sm:col-span-2">{message}</p> : null}
+          {message ? <p className="order-9 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 sm:order-none sm:col-span-2">{message}</p> : null}
           <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-line bg-white/95 p-3 backdrop-blur sm:static sm:order-none sm:col-span-2 sm:border-0 sm:bg-transparent sm:p-0">
             <Button className="min-h-12 w-full text-base sm:w-auto" type="submit" disabled={saving || activeCategories.length === 0}>
               <Save size={16} />

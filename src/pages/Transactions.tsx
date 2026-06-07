@@ -80,7 +80,7 @@ export function Transactions() {
     const to = from + pageSize - 1;
     let query = supabase
       .from('transactions')
-      .select('id,user_id,occurred_on,amount,type,category,category_id,merchant,payment_method,notes,tags,recurring_income_id,created_at,updated_at')
+      .select('id,user_id,occurred_on,amount,type,category,category_id,merchant,payment_method,notes,tags,recurring_income_id,recurring_expense_id,created_at,updated_at')
       .eq('user_id', user.id);
 
     if (categoryFilter !== 'all') query = query.eq('category', categoryFilter);
