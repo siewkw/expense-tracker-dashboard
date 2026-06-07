@@ -35,6 +35,7 @@ type FinanceDataOptions = {
   endDate?: string;
   recentTransactionLimit?: number;
   includeWealth?: boolean;
+  applyDashboardExclusions?: boolean;
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -73,6 +74,7 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
   const endDate = options.endDate ?? today();
   const recentTransactionLimit = options.recentTransactionLimit ?? 8;
   const includeWealth = options.includeWealth ?? true;
+  const applyDashboardExclusions = options.applyDashboardExclusions ?? false;
   const [data, setData] = useState<FinanceData>(emptyData);
   const [periodSummary, setPeriodSummary] = useState({ income: 0, spending: 0 });
   const [loading, setLoading] = useState(true);
@@ -101,7 +103,7 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
       properties,
     ] = await Promise.all([
       supabase.from('profiles').select('id,user_id,full_name,currency,monthly_income_target,monthly_budget_target,created_at,updated_at').eq('user_id', user.id).maybeSingle(),
-      supabase.from('categories').select('id,user_id,name,color,is_archived,created_at,updated_at').eq('user_id', user.id).order('is_archived', { ascending: true }).order('name', { ascending: true }),
+      supabase.from('categories').select('id,user_id,name,color,is_archived,exclude_from_dashboard,created_at,updated_at').eq('user_id', user.id).order('is_archived', { ascending: true }).order('name', { ascending: true }),
       supabase.from('merchant_rules').select('id,user_id,merchant_pattern,category,source,confidence,is_active,created_at,updated_at').or(`user_id.is.null,user_id.eq.${user.id}`).eq('is_active', true).order('source', { ascending: false }).order('merchant_pattern', { ascending: true }),
       supabase
         .from('transactions')
@@ -111,9 +113,9 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
         .lte('occurred_on', endDate)
         .order('occurred_on', { ascending: false })
         .limit(recentTransactionLimit),
-      supabase.rpc('get_transaction_period_summary', { p_start_date: startDate, p_end_date: endDate }),
-      supabase.rpc('get_transaction_daily_summary', { p_start_date: startDate, p_end_date: endDate }),
-      supabase.rpc('get_transaction_category_summary', { p_start_date: startDate, p_end_date: endDate }),
+      supabase.rpc(applyDashboardExclusions ? 'get_dashboard_period_summary' : 'get_transaction_period_summary', { p_start_date: startDate, p_end_date: endDate }),
+      supabase.rpc(applyDashboardExclusions ? 'get_dashboard_daily_summary' : 'get_transaction_daily_summary', { p_start_date: startDate, p_end_date: endDate }),
+      supabase.rpc(applyDashboardExclusions ? 'get_dashboard_category_summary' : 'get_transaction_category_summary', { p_start_date: startDate, p_end_date: endDate }),
       supabase.from('monthly_budgets').select('id,user_id,month,amount,created_at,updated_at').eq('user_id', user.id).order('month', { ascending: false }),
       supabase.from('budgets').select('id,user_id,category,month,amount,created_at,updated_at').eq('user_id', user.id).order('month', { ascending: false }),
       includeWealth ? supabase.from('investments').select('id,user_id,name,account,quantity,cost_basis,current_value,as_of,created_at,updated_at').eq('user_id', user.id).order('current_value', { ascending: false }) : Promise.resolve({ data: [], error: null }),
@@ -132,11 +134,22 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
 
     const period = periodSummaryResult.data?.[0] ?? { income: 0, spending: 0 };
     setPeriodSummary({ income: Number(period.income), spending: Number(period.spending) });
+    const loadedCategories = (categories.data ?? []) as Category[];
+    const excludedCategoryIds = new Set(loadedCategories.filter((item) => item.exclude_from_dashboard).map((item) => item.id));
+    const excludedCategoryNames = new Set(loadedCategories.filter((item) => item.exclude_from_dashboard).map((item) => item.name.toLowerCase()));
+    const loadedTransactions = (transactions.data ?? []) as Transaction[];
+    const visibleTransactions = applyDashboardExclusions
+      ? loadedTransactions.filter((transaction) => transaction.type !== 'expense' || !(
+        (transaction.category_id && excludedCategoryIds.has(transaction.category_id))
+        || (!transaction.category_id && excludedCategoryNames.has(transaction.category.toLowerCase()))
+      ))
+      : loadedTransactions;
+
     setData({
       profile: profile.data ?? null,
-      categories: (categories.data ?? []) as Category[],
+      categories: loadedCategories,
       merchantRules: (merchantRules.data ?? []) as MerchantRule[],
-      transactions: (transactions.data ?? []) as Transaction[],
+      transactions: visibleTransactions,
       dailySummary: (dailySummary.data ?? []).map((item) => ({ day: item.day, income: Number(item.income), spending: Number(item.spending) })),
       categorySummary: (categorySummary.data ?? []).map((item) => ({ category: item.category, spending: Number(item.spending) })),
       monthlyBudgets: (monthlyBudgets.data ?? []) as MonthlyBudget[],
@@ -147,7 +160,7 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
       properties: (properties.data ?? []) as Property[],
     });
     setLoading(false);
-  }, [endDate, includeWealth, recentTransactionLimit, startDate, user]);
+  }, [applyDashboardExclusions, endDate, includeWealth, recentTransactionLimit, startDate, user]);
 
   useEffect(() => {
     refresh();

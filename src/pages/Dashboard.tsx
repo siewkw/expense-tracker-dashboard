@@ -9,8 +9,9 @@ import { useFinanceData } from '../hooks/useFinanceData';
 export function Dashboard() {
   const [startDate, setStartDate] = useState(currentMonthDate());
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
-  const { transactions, dailySummary, categorySummary, summary, profile, loading, error } = useFinanceData({ startDate, endDate, recentTransactionLimit: 8 });
+  const { transactions, dailySummary, categorySummary, summary, profile, categories, loading, error } = useFinanceData({ startDate, endDate, recentTransactionLimit: 8, applyDashboardExclusions: true });
   const currency = profile?.currency ?? 'MYR';
+  const excludedCategoryCount = categories.filter((category) => category.exclude_from_dashboard).length;
   const trend = dailySummary.map((item) => ({ date: item.day.slice(5), spending: item.spending, income: item.income }));
   const categoryChart = categorySummary.map((item) => ({ name: item.category, value: item.spending }));
 
@@ -27,6 +28,11 @@ export function Dashboard() {
         }
       />
       {error ? <ErrorMessage message={`We could not load your dashboard data. ${error}`} /> : null}
+      {excludedCategoryCount > 0 ? (
+        <p className="mb-5 rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-700">
+          {excludedCategoryCount} {excludedCategoryCount === 1 ? 'category is' : 'categories are'} excluded from dashboard spending.
+        </p>
+      ) : null}
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className="h-28" />)}

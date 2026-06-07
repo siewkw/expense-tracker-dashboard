@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { Archive, Pencil, RotateCcw, Save, Trash2 } from 'lucide-react';
+import { Archive, Eye, EyeOff, Pencil, RotateCcw, Save, Trash2 } from 'lucide-react';
 import { Button, Card, Field, Input, PageHeader, Select } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../providers/AuthProvider';
@@ -89,6 +89,15 @@ export function Settings() {
     if (!error) refresh();
   }
 
+  async function setCategoryDashboardExclusion(categoryId: string, excludeFromDashboard: boolean) {
+    const { error } = await supabase
+      .from('categories')
+      .update({ exclude_from_dashboard: excludeFromDashboard })
+      .eq('id', categoryId);
+    setMessage(error ? error.message : excludeFromDashboard ? 'Category excluded from dashboard spending.' : 'Category included in dashboard spending.');
+    if (!error) refresh();
+  }
+
   const activeCategories = categories.filter((category) => !category.is_archived);
   const archivedCategories = categories.filter((category) => category.is_archived);
   const learnedRules = merchantRules.filter((rule) => rule.user_id === user?.id);
@@ -167,7 +176,7 @@ export function Settings() {
         <Card>
           <div className="mb-5">
             <h2 className="font-sora text-lg font-semibold text-ink">Category Management</h2>
-            <p className="mt-1 text-sm text-slate-600">Active categories appear in expense, transaction, budget, report, and chart views.</p>
+            <p className="mt-1 text-sm text-slate-600">Active categories appear throughout SaveLah. Use the eye button to include or exclude a category from dashboard spending only.</p>
           </div>
 
           <form onSubmit={addCategory} className="mb-6 grid gap-4 sm:grid-cols-[1fr_120px_auto]">
@@ -193,6 +202,7 @@ export function Settings() {
             onColorChange={setEditingColor}
             onSave={saveCategory}
             onArchive={(id) => setCategoryArchived(id, true)}
+            onToggleDashboard={(id, excluded) => setCategoryDashboardExclusion(id, !excluded)}
           />
 
           <div className="mt-8">
@@ -275,9 +285,10 @@ function CategoryList({
   onSave,
   onArchive,
   onRestore,
+  onToggleDashboard,
 }: {
   title: string;
-  categories: Array<{ id: string; name: string; color: string }>;
+  categories: Array<{ id: string; name: string; color: string; exclude_from_dashboard: boolean }>;
   editingCategoryId: string | null;
   editingName: string;
   editingColor: string;
@@ -287,6 +298,7 @@ function CategoryList({
   onSave: (categoryId: string) => void;
   onArchive?: (categoryId: string) => void;
   onRestore?: (categoryId: string) => void;
+  onToggleDashboard?: (categoryId: string, currentlyExcluded: boolean) => void;
 }) {
   return (
     <section>
@@ -305,10 +317,28 @@ function CategoryList({
                     <Input type="color" value={editingColor} onChange={(event) => onColorChange(event.target.value)} />
                   </div>
                 ) : (
-                  <span className="truncate text-sm font-medium text-ink">{category.name}</span>
+                  <div className="min-w-0">
+                    <span className="block truncate text-sm font-medium text-ink">{category.name}</span>
+                    {onToggleDashboard ? (
+                      <span className={`mt-1 block text-xs ${category.exclude_from_dashboard ? 'text-amber-700' : 'text-slate-500'}`}>
+                        {category.exclude_from_dashboard ? 'Excluded from dashboard spending' : 'Counted in dashboard spending'}
+                      </span>
+                    ) : null}
+                  </div>
                 )}
               </div>
               <div className="flex gap-2">
+                {!isEditing && onToggleDashboard ? (
+                  <Button
+                    type="button"
+                    className={category.exclude_from_dashboard ? 'bg-amber-600 px-3 hover:bg-amber-700' : 'bg-white px-3 text-slate-600 shadow-sm ring-1 ring-slate-200 hover:bg-slate-100'}
+                    onClick={() => onToggleDashboard(category.id, category.exclude_from_dashboard)}
+                    aria-label={category.exclude_from_dashboard ? 'Include category in dashboard spending' : 'Exclude category from dashboard spending'}
+                    title={category.exclude_from_dashboard ? 'Include on dashboard' : 'Exclude from dashboard'}
+                  >
+                    {category.exclude_from_dashboard ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </Button>
+                ) : null}
                 {isEditing ? (
                   <Button type="button" className="px-3" onClick={() => onSave(category.id)} aria-label="Save category">
                     <Save size={15} />

@@ -57,6 +57,7 @@ export type Category = {
   name: string;
   color: string;
   is_archived: boolean;
+  exclude_from_dashboard: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -200,6 +201,18 @@ export type Database = {
         Returns: { day: string; income: number; spending: number }[];
       };
       get_transaction_category_summary: {
+        Args: { p_start_date: string; p_end_date: string };
+        Returns: { category: string; spending: number }[];
+      };
+      get_dashboard_period_summary: {
+        Args: { p_start_date: string; p_end_date: string };
+        Returns: { income: number; spending: number }[];
+      };
+      get_dashboard_daily_summary: {
+        Args: { p_start_date: string; p_end_date: string };
+        Returns: { day: string; income: number; spending: number }[];
+      };
+      get_dashboard_category_summary: {
         Args: { p_start_date: string; p_end_date: string };
         Returns: { category: string; spending: number }[];
       };
