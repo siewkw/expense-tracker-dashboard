@@ -1,4 +1,4 @@
-import { Bot, CreditCard, FileInput, FileText, Gauge, LogOut, Menu, PiggyBank, Plus, Settings, TrendingUp, X } from 'lucide-react';
+import { Banknote, Bot, CreditCard, FileInput, FileText, Gauge, LogOut, Menu, PiggyBank, Plus, Settings, TrendingUp, X } from 'lucide-react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 import { clsx } from 'clsx';
@@ -9,6 +9,7 @@ import { BrandLogo } from './BrandLogo';
 const links = [
   { to: '/', label: 'Dashboard', icon: Gauge },
   { to: '/add-expense', label: 'Add', icon: Plus },
+  { to: '/income', label: 'Income', icon: Banknote },
   { to: '/transactions', label: 'Transactions', icon: CreditCard },
   { to: '/import-export', label: 'Import', icon: FileInput },
   { to: '/budgets', label: 'Budgets', icon: PiggyBank },

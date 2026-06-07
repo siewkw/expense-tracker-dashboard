@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Save } from 'lucide-react';
 import { Button, Card, Field, Input, PageHeader, Select, TextArea } from '../components/ui';
 import { PAYMENT_METHODS } from '../constants/finance';
@@ -72,7 +73,11 @@ export function AddExpense() {
 
   return (
     <>
-      <PageHeader title="Add Expense" description="Amount, merchant, category, save." />
+      <PageHeader
+        title="Add Expense"
+        description="Amount, merchant, category, save."
+        action={<Link to="/income" className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-indigo-200 bg-indigo-50 px-4 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100">Add income instead</Link>}
+      />
       <Card className="mx-auto max-w-3xl">
         <form onSubmit={submit} className="grid gap-4 pb-20 sm:grid-cols-2 sm:pb-0">
           <div className="order-1 sm:order-none">

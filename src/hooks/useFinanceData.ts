@@ -38,6 +38,19 @@ type FinanceDataOptions = {
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
+const recurringIncomeRuns = new Map<string, Promise<void>>();
+
+function processRecurringIncome(userId: string) {
+  const key = `${userId}:${today()}`;
+  const existing = recurringIncomeRuns.get(key);
+  if (existing) return existing;
+
+  const run = Promise.resolve(supabase.rpc('process_recurring_incomes', { p_as_of: today() }))
+    .then(() => undefined, () => undefined);
+
+  recurringIncomeRuns.set(key, run);
+  return run;
+}
 
 const emptyData: FinanceData = {
   profile: null,
@@ -70,6 +83,7 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
 
     setLoading(true);
     setError(null);
+    await processRecurringIncome(user.id);
 
     const [
       profile,
@@ -91,7 +105,7 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
       supabase.from('merchant_rules').select('id,user_id,merchant_pattern,category,source,confidence,is_active,created_at,updated_at').or(`user_id.is.null,user_id.eq.${user.id}`).eq('is_active', true).order('source', { ascending: false }).order('merchant_pattern', { ascending: true }),
       supabase
         .from('transactions')
-        .select('id,user_id,occurred_on,amount,type,category,category_id,merchant,payment_method,notes,tags,created_at,updated_at')
+        .select('id,user_id,occurred_on,amount,type,category,category_id,merchant,payment_method,notes,tags,recurring_income_id,created_at,updated_at')
         .eq('user_id', user.id)
         .gte('occurred_on', startDate)
         .lte('occurred_on', endDate)

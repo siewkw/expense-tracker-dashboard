@@ -12,6 +12,22 @@ export type Transaction = {
   payment_method: string | null;
   notes: string | null;
   tags: string[];
+  recurring_income_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RecurringIncome = {
+  id: string;
+  user_id: string;
+  name: string;
+  amount: number;
+  day_of_month: number;
+  start_month: string;
+  payment_method: string;
+  notes: string | null;
+  is_active: boolean;
+  last_generated_month: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -165,6 +181,7 @@ export type Database = {
       properties: Table<Property>;
       categories: Table<Category>;
       merchant_rules: Table<MerchantRule>;
+      recurring_incomes: Table<RecurringIncome>;
       payment_methods: {
         Row: { id: string; user_id: string | null; name: string; created_at: string };
         Insert: { id?: string; user_id?: string | null; name: string; created_at?: string };
@@ -197,6 +214,10 @@ export type Database = {
       get_biggest_transactions: {
         Args: { p_start_date: string; p_end_date: string; p_limit?: number };
         Returns: BiggestTransaction[];
+      };
+      process_recurring_incomes: {
+        Args: { p_as_of?: string };
+        Returns: number;
       };
     };
     Enums: {
