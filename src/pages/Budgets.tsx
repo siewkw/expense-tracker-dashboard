@@ -40,7 +40,7 @@ function getAlertStyle(alert: string) {
 
 export function Budgets() {
   const { user } = useAuth();
-  const { categories, summary, profile, refresh } = useFinanceData({ includeWealth: false });
+  const { categories, summary, profile, refresh } = useFinanceData({ includeWealth: false, applyDashboardExclusions: true });
   const [monthlyAmount, setMonthlyAmount] = useState('');
   const [category, setCategory] = useState('');
   const [categoryAmount, setCategoryAmount] = useState('');
@@ -49,7 +49,8 @@ export function Budgets() {
   const currentMonthLabel = new Date(`${month}T00:00:00`).toLocaleDateString('en-MY', { month: 'long', year: 'numeric' });
   const alert = getAlertStyle(summary.budgetAlert);
   const AlertIcon = alert.icon;
-  const activeCategories = categories.filter((item) => !item.is_archived);
+  const activeCategories = categories.filter((item) => !item.is_archived && !item.exclude_from_dashboard);
+  const excludedCategoryCount = categories.filter((item) => item.exclude_from_dashboard).length;
   const selectedCategory = category || activeCategories[0]?.name || '';
 
   useEffect(() => {
@@ -88,6 +89,11 @@ export function Budgets() {
   return (
     <>
       <PageHeader title="Budgets" description={`Manage monthly and category budgets for ${currentMonthLabel}.`} />
+      {excludedCategoryCount > 0 ? (
+        <p className="mb-5 rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-700">
+          {excludedCategoryCount} {excludedCategoryCount === 1 ? 'category is' : 'categories are'} excluded from spending and category budgets on this page.
+        </p>
+      ) : null}
 
       <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 xl:grid-cols-4">
         <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Monthly budget" value={formatCurrency(summary.budget, currency)} detail={summary.monthlyBudget ? 'Custom monthly limit' : 'Using category total'} /></div>
@@ -141,7 +147,7 @@ export function Budgets() {
                 <Input type="number" min="0" step="0.01" value={categoryAmount} onChange={(event) => setCategoryAmount(event.target.value)} required />
               </Field>
               <Button type="submit" disabled={activeCategories.length === 0}>Save category budget</Button>
-              {activeCategories.length === 0 ? <p className="text-sm text-slate-600">Add an active category in Settings before creating category budgets.</p> : null}
+              {activeCategories.length === 0 ? <p className="text-sm text-slate-600">Add or include an active category in Settings before creating category budgets.</p> : null}
             </form>
           </Card>
         </div>
