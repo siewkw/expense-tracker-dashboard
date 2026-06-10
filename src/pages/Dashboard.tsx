@@ -13,7 +13,19 @@ export function Dashboard() {
   const currency = profile?.currency ?? 'MYR';
   const excludedCategoryCount = categories.filter((category) => category.exclude_from_dashboard).length;
   const trend = dailySummary.map((item) => ({ date: item.day.slice(5), spending: item.spending, income: item.income }));
-  const categoryChart = categorySummary.map((item) => ({ name: item.category, value: item.spending }));
+  const rankedCategories = categorySummary
+    .map((item) => ({ name: item.category, value: item.spending }))
+    .sort((a, b) => b.value - a.value);
+  const categoryTotal = rankedCategories.reduce((sum, item) => sum + item.value, 0);
+  const categoryChart = rankedCategories.length > 5
+    ? [
+        ...rankedCategories.slice(0, 5),
+        {
+          name: 'Others',
+          value: rankedCategories.slice(5).reduce((sum, item) => sum + item.value, 0),
+        },
+      ]
+    : rankedCategories;
 
   return (
     <>
@@ -145,19 +157,36 @@ export function Dashboard() {
         </Card>
         <Card>
           <SectionHeading title="Where it went" description="Your spending mix by category." />
-          <div className="h-60 sm:h-72">
-            <ResponsiveContainer>
-              <PieChart>
-                <Pie data={categoryChart} dataKey="value" nameKey="name" innerRadius={58} outerRadius={92} paddingAngle={4} cornerRadius={5}>
-                  {categoryChart.map((entry, index) => (
-                    <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => formatCurrency(Number(value), currency)} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          {categoryChart.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] sm:items-center">
+              <div className="h-52 sm:h-64">
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie data={categoryChart} dataKey="value" nameKey="name" innerRadius="53%" outerRadius="78%" paddingAngle={3} cornerRadius={5}>
+                      {categoryChart.map((entry, index) => (
+                        <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => formatCurrency(Number(value), currency)} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="grid gap-2">
+                {categoryChart.map((entry, index) => (
+                  <div key={entry.name} className="flex min-w-0 items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
+                    <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-700">{entry.name}</span>
+                    <span className="shrink-0 text-right">
+                      <span className="block text-sm font-semibold text-ink">{formatCurrency(entry.value, currency)}</span>
+                      <span className="block text-xs text-slate-400">{formatPercent(categoryTotal > 0 ? entry.value / categoryTotal : 0)}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="rounded-2xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">No spending categories for this period.</p>
+          )}
         </Card>
       </div>
 
