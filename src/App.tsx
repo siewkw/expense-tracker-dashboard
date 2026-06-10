@@ -4,6 +4,7 @@ import { PrivateRoute } from './components/PrivateRoute';
 import { AddExpense } from './pages/AddExpense';
 import { Automations } from './pages/Automations';
 import { Budgets } from './pages/Budgets';
+import { ChangeLog } from './pages/ChangeLog';
 import { Dashboard } from './pages/Dashboard';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { ImportExport } from './pages/ImportExport';
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/investments" element={<Investments />} />
           <Route path="/income" element={<Income />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/changelog" element={<ChangeLog />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

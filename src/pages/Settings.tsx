@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { Archive, Eye, EyeOff, Pencil, RotateCcw, Save, Trash2 } from 'lucide-react';
+import { Archive, ArrowRight, Eye, EyeOff, Pencil, RotateCcw, Save, Sparkles, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button, Card, Field, Input, PageHeader, Select } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../providers/AuthProvider';
@@ -153,6 +154,19 @@ export function Settings() {
 
       <div className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
         <div className="space-y-4">
+          <Link
+            to="/changelog"
+            className="group flex items-center gap-4 rounded-[22px] border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-indigo-200"
+          >
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-indigo-600 text-white shadow-[0_10px_24px_rgba(79,70,229,0.2)]">
+              <Sparkles size={21} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-sora text-lg font-semibold text-ink">What’s New</span>
+              <span className="mt-1 block text-sm text-slate-500">See recent SaveLah features, improvements, and fixes.</span>
+            </span>
+            <ArrowRight className="shrink-0 text-indigo-400 transition group-hover:translate-x-1" size={20} />
+          </Link>
           <Card>
             <h2 className="mb-1 font-sora text-lg font-semibold text-ink">Profile</h2>
             <p className="mb-5 text-sm text-slate-500">Your personal details and preferred currency.</p>
