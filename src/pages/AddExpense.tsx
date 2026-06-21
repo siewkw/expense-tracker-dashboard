@@ -22,7 +22,6 @@ export function AddExpense() {
     merchant: '',
     payment_method: 'Credit Card',
     notes: '',
-    tags: '',
   });
   const activeCategories = categories.filter((category) => !category.is_archived);
   const recentMerchants = useMemo(() => {
@@ -52,7 +51,6 @@ export function AddExpense() {
     setMessage('');
 
     const selectedCategory = activeCategories.find((category) => category.name === form.category);
-    const tags = form.tags.split(',').map((tag) => tag.trim()).filter(Boolean);
     const { error } = await supabase.from('transactions').insert({
       user_id: user.id,
       occurred_on: form.occurred_on,
@@ -63,7 +61,7 @@ export function AddExpense() {
       merchant: form.merchant || null,
       payment_method: form.payment_method,
       notes: form.notes || null,
-      tags,
+      tags: [],
       recurring_income_id: null,
       recurring_expense_id: null,
     });
@@ -87,7 +85,7 @@ export function AddExpense() {
         start_month: nextMonth,
         payment_method: form.payment_method,
         notes: form.notes.trim() || null,
-        tags,
+        tags: [],
         is_active: true,
       });
 
@@ -160,17 +158,12 @@ export function AddExpense() {
               <Input className="py-3 text-base" type="date" value={form.occurred_on} onChange={(event) => setForm({ ...form, occurred_on: event.target.value })} required />
             </Field>
           </div>
-          <div className="order-6 sm:order-none">
-            <Field label="Tags">
-              <Input className="py-3 text-base" placeholder="comma, separated, tags" value={form.tags} onChange={(event) => setForm({ ...form, tags: event.target.value })} />
-            </Field>
-          </div>
-          <div className="order-7 sm:order-none sm:col-span-2">
+          <div className="order-6 sm:order-none sm:col-span-2">
             <Field label="Notes">
               <TextArea className="text-base" rows={3} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
             </Field>
           </div>
-          <div className="order-8 rounded-[20px] border border-indigo-100 bg-indigo-50/70 p-4 sm:order-none sm:col-span-2">
+          <div className="order-7 rounded-[20px] border border-indigo-100 bg-indigo-50/70 p-4 sm:order-none sm:col-span-2">
             <label className="flex cursor-pointer items-start justify-between gap-4">
               <span className="flex items-start gap-3">
                 <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white text-indigo-600 shadow-sm">
@@ -221,7 +214,7 @@ export function AddExpense() {
               ))}
             </div>
           ) : null}
-          {message ? <p className="order-9 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 sm:order-none sm:col-span-2">{message}</p> : null}
+          {message ? <p className="order-8 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 sm:order-none sm:col-span-2">{message}</p> : null}
           <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-line bg-white/95 p-3 backdrop-blur sm:static sm:order-none sm:col-span-2 sm:border-0 sm:bg-transparent sm:p-0">
             <Button className="min-h-12 w-full text-base sm:w-auto" type="submit" disabled={saving || activeCategories.length === 0}>
               <Save size={16} />
