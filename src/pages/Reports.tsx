@@ -7,7 +7,13 @@ import { useFinanceData } from '../hooks/useFinanceData';
 export function Reports() {
   const [startDate, setStartDate] = useState(currentMonthDate());
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
-  const { categorySummary, summary, profile, loading, error } = useFinanceData({ startDate, endDate, recentTransactionLimit: 0, includeWealth: false });
+  const { categorySummary, summary, profile, loading, error } = useFinanceData({
+    startDate,
+    endDate,
+    recentTransactionLimit: 0,
+    includeWealth: false,
+    applyDashboardExclusions: true,
+  });
   const currency = profile?.currency ?? 'MYR';
   const byCategory = categorySummary.map((item) => ({ category: item.category, amount: item.spending })).sort((a, b) => b.amount - a.amount);
   const overspending = summary.categoryBudgets.filter((budget) => budget.spent > budget.amount).sort((a, b) => b.usedPercent - a.usedPercent);

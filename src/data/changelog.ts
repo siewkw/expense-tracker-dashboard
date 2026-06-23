@@ -13,6 +13,15 @@ export type ChangeLogEntry = {
 
 export const CHANGELOG: ChangeLogEntry[] = [
   {
+    version: '1.5.3',
+    date: '2026-06-23',
+    title: 'Cleaner reports totals',
+    summary: 'Reports now follow the same category exclusions as your main spending view.',
+    changes: [
+      { type: 'fixed', text: 'Excluded categories no longer appear in Reports spending totals, charts, or overspending checks.' },
+    ],
+  },
+  {
     version: '1.5.2',
     date: '2026-06-23',
     title: 'Cleaner Expenses tab',
