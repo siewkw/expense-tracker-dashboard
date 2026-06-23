@@ -13,6 +13,15 @@ export type ChangeLogEntry = {
 
 export const CHANGELOG: ChangeLogEntry[] = [
   {
+    version: '1.5.2',
+    date: '2026-06-23',
+    title: 'Cleaner Expenses tab',
+    summary: 'Expenses is now focused on reviewing and managing transactions.',
+    changes: [
+      { type: 'improved', text: 'Removed the duplicate Quick Add Expense section from the Expenses tab.' },
+    ],
+  },
+  {
     version: '1.5.1',
     date: '2026-06-21',
     title: 'Simpler expense entry',

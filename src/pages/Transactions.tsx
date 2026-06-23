@@ -1,5 +1,5 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { Pencil, Plus, Save, Search, Trash2, X } from 'lucide-react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { Pencil, Save, Search, Trash2, X } from 'lucide-react';
 import { Button, Card, ErrorMessage, Field, Input, PageHeader, Select, Skeleton, TextArea } from '../components/ui';
 import { EmptyState } from '../components/EmptyState';
 import { PAYMENT_METHODS } from '../constants/finance';
@@ -40,7 +40,6 @@ export function Transactions() {
   const [listLoading, setListLoading] = useState(true);
   const [listError, setListError] = useState('');
   const [hasMore, setHasMore] = useState(true);
-  const [form, setForm] = useState<ExpenseForm>(emptyExpenseForm());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingForm, setEditingForm] = useState<ExpenseForm>(emptyExpenseForm());
   const [search, setSearch] = useState('');
@@ -49,26 +48,6 @@ export function Transactions() {
   const [typeFilter, setTypeFilter] = useState<'all' | TransactionType>('all');
   const [sortBy, setSortBy] = useState('date_desc');
   const pageSize = 50;
-
-  useEffect(() => {
-    if (!form.category && activeCategories[0]) {
-      setForm((current) => ({ ...current, category: activeCategories[0].name }));
-    }
-  }, [activeCategories, form.category]);
-
-  const recentMerchants = useMemo(() => {
-    const counts = transactions.reduce<Record<string, number>>((acc, transaction) => {
-      const merchant = transaction.merchant?.trim();
-      if (!merchant) return acc;
-      acc[merchant] = (acc[merchant] ?? 0) + 1;
-      return acc;
-    }, {});
-
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-      .slice(0, 8)
-      .map(([merchant]) => merchant);
-  }, [transactions]);
 
   const filteredTransactions = transactions;
 
@@ -111,26 +90,6 @@ export function Transactions() {
   useEffect(() => {
     loadTransactions(0);
   }, [categoryFilter, loadTransactions, paymentFilter, search, sortBy, typeFilter]);
-
-  async function addExpense(event: FormEvent) {
-    event.preventDefault();
-    if (!user) return;
-    await supabase.from('transactions').insert({
-      user_id: user.id,
-      occurred_on: form.occurred_on,
-      amount: Number(form.amount),
-      type: 'expense',
-      category: form.category,
-      category_id: activeCategories.find((category) => category.name === form.category)?.id ?? null,
-      merchant: form.merchant || null,
-      payment_method: form.payment_method,
-      notes: form.notes || null,
-      tags: [],
-    });
-    setForm(emptyExpenseForm(form.category));
-    loadTransactions(0);
-    refresh();
-  }
 
   function startEditing(transaction: Transaction) {
     setEditingId(transaction.id);
@@ -203,66 +162,7 @@ export function Transactions() {
 
   return (
     <>
-      <PageHeader title="Transactions" description="Quickly add, search, filter, edit, and delete expenses." />
-
-      <Card className="mb-4 overflow-hidden border-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600">Fast entry</p>
-            <h2 className="font-sora text-xl font-semibold text-ink">Quick Add Expense</h2>
-            <p className="mt-1 text-sm text-slate-600">Amount, merchant, category, save. Built for fast mobile entry.</p>
-          </div>
-        </div>
-        <form onSubmit={addExpense} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[130px_130px_1fr_180px_170px_auto]">
-          <Field label="Date">
-            <Input className="py-3 text-base" type="date" value={form.occurred_on} onChange={(event) => setForm({ ...form, occurred_on: event.target.value })} required />
-          </Field>
-          <Field label="Amount">
-            <Input className="py-3 text-base" type="number" min="0.01" step="0.01" inputMode="decimal" value={form.amount} onChange={(event) => setForm({ ...form, amount: event.target.value })} required />
-          </Field>
-          <Field label="Merchant">
-            <Input className="py-3 text-base" list="recent-merchants" value={form.merchant} onChange={(event) => setForm({ ...form, merchant: event.target.value })} placeholder="Merchant" />
-          </Field>
-          <Field label="Category">
-            <Select className="py-3 text-base" value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })}>
-              {activeCategories.map((category) => <option key={category.id}>{category.name}</option>)}
-            </Select>
-          </Field>
-          <Field label="Payment">
-            <Select className="py-3 text-base" value={form.payment_method} onChange={(event) => setForm({ ...form, payment_method: event.target.value })}>
-              {PAYMENT_METHODS.map((method) => <option key={method}>{method}</option>)}
-            </Select>
-          </Field>
-          <div className="flex items-end">
-            <Button type="submit" className="min-h-12 w-full px-5 text-base" disabled={activeCategories.length === 0}>
-              <Plus size={18} />
-              Add
-            </Button>
-          </div>
-          <div className="sm:col-span-2 xl:col-span-6">
-            <Field label="Notes">
-              <TextArea className="text-base" rows={2} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
-            </Field>
-          </div>
-        </form>
-        <datalist id="recent-merchants">
-          {recentMerchants.map((merchant) => <option key={merchant} value={merchant} />)}
-        </datalist>
-        {recentMerchants.length > 0 ? (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {recentMerchants.slice(0, 6).map((merchant) => (
-              <button
-                key={merchant}
-                type="button"
-                className="rounded-full border border-indigo-100 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:text-indigo-700"
-                onClick={() => setForm((current) => ({ ...current, merchant }))}
-              >
-                {merchant}
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </Card>
+      <PageHeader title="Transactions" description="Search, filter, edit, and delete expenses." />
 
       <Card className="mb-4 bg-slate-50/70">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_180px_150px_180px]">
