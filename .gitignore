@@ -9,6 +9,7 @@ build/
 .vercel/
 *.log
 *.tsbuildinfo
+.tsbuild/
 
 vite.config.js
 vite.config.d.ts
@@ -18,3 +19,6 @@ Thumbs.db
 
 # Local Codex deployment workspace
 .codex-deploy-temp/
+
+.vercel
+.env*

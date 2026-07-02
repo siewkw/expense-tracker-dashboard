@@ -33,6 +33,7 @@ type FinanceData = {
 type FinanceDataOptions = {
   startDate?: string;
   endDate?: string;
+  budgetMonth?: string;
   recentTransactionLimit?: number;
   includeWealth?: boolean;
   applyDashboardExclusions?: boolean;
@@ -40,6 +41,11 @@ type FinanceDataOptions = {
 
 const today = () => new Date().toISOString().slice(0, 10);
 const recurringAutomationRuns = new Map<string, Promise<void>>();
+const excludedBudgetSpendingCategories = new Set(['income', 'credit card repayment']);
+
+function isBudgetSpendingCategory(category: string) {
+  return !excludedBudgetSpendingCategories.has(category.trim().toLowerCase());
+}
 
 function processRecurringTransactions(userId: string) {
   const key = `${userId}:${today()}`;
@@ -74,6 +80,7 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
   const { user } = useAuth();
   const startDate = options.startDate ?? currentMonthDate();
   const endDate = options.endDate ?? today();
+  const budgetMonth = options.budgetMonth ?? currentMonthDate();
   const recentTransactionLimit = options.recentTransactionLimit ?? 8;
   const includeWealth = options.includeWealth ?? true;
   const applyDashboardExclusions = options.applyDashboardExclusions ?? false;
@@ -169,7 +176,7 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
   }, [refresh]);
 
   const summary = useMemo(() => {
-    const monthStart = currentMonthDate();
+    const monthStart = budgetMonth;
     const income = periodSummary.income;
     const spending = periodSummary.spending;
     const monthlyBudgetRecord = data.monthlyBudgets.find((item) => item.month === monthStart) ?? null;
@@ -183,9 +190,11 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
     );
     const categoryBudgetTotal = includedBudgets.reduce((sum, item) => sum + item.amount, 0);
     const budget = monthlyBudgetRecord?.amount ?? categoryBudgetTotal;
-    const budgetUsedPercent = budget > 0 ? spending / budget : 0;
+    const budgetCategorySummary = data.categorySummary.filter((item) => isBudgetSpendingCategory(item.category));
+    const budgetSpending = budgetCategorySummary.reduce((sum, item) => sum + item.spending, 0);
+    const budgetUsedPercent = budget > 0 ? budgetSpending / budget : 0;
     const budgetAlert = budgetUsedPercent >= 1 ? 'critical' : budgetUsedPercent >= 0.8 ? 'warning' : 'healthy';
-    const spendingByCategory = new Map(data.categorySummary.map((item) => [item.category, item.spending]));
+    const spendingByCategory = new Map(budgetCategorySummary.map((item) => [item.category, item.spending]));
     const categoryBudgets = includedBudgets
       .map((budgetItem) => {
         const spent = spendingByCategory.get(budgetItem.category) ?? 0;
@@ -193,7 +202,7 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
         return {
           ...budgetItem,
           spent,
-          remaining: Math.max(budgetItem.amount - spent, 0),
+          remaining: budgetItem.amount - spent,
           usedPercent,
           alert: usedPercent >= 1 ? 'critical' : usedPercent >= 0.8 ? 'warning' : 'healthy',
         };
@@ -208,10 +217,11 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
     return {
       income,
       spending,
+      budgetSpending,
       budget,
       monthlyBudget: monthlyBudgetRecord,
       categoryBudgetTotal,
-      remainingBudget: Math.max(budget - spending, 0),
+      remainingBudget: Math.max(budget - budgetSpending, 0),
       budgetUsedPercent,
       budgetAlert,
       categoryBudgets,
@@ -220,7 +230,7 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
       netWorth,
       monthTransactions: data.transactions,
     };
-  }, [applyDashboardExclusions, data, periodSummary]);
+  }, [applyDashboardExclusions, budgetMonth, data, periodSummary]);
 
   return { ...data, summary, loading, error, refresh, range: { startDate, endDate } };
 }
