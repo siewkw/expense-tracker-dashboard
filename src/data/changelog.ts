@@ -88,3 +88,5 @@ export const CHANGELOG: ChangeLogEntry[] = [
     ],
   },
 ];
+
+export const LATEST_CHANGELOG_ENTRY = CHANGELOG[0] ?? null;

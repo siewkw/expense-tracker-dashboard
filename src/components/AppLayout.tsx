@@ -5,6 +5,7 @@ import { clsx } from 'clsx';
 import { useState } from 'react';
 import { PwaInstallPrompt } from './PwaInstallPrompt';
 import { BrandLogo } from './BrandLogo';
+import { WhatsNewModal } from './WhatsNewModal';
 
 const links = [
   { to: '/', label: 'Dashboard', icon: Gauge },
@@ -168,6 +169,7 @@ export function AppLayout() {
           ))}
         </nav>
         <PwaInstallPrompt />
+        <WhatsNewModal />
       </div>
     </div>
   );
