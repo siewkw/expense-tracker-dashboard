@@ -8,6 +8,10 @@ import { supabase } from '../lib/supabase';
 import { useFinanceData } from '../hooks/useFinanceData';
 import { useAuth } from '../providers/AuthProvider';
 import type { Transaction, TransactionType } from '../types/database';
+import type { TripTransactionValue } from '../components/TripTransactionFields';
+import { TripTransactionFields } from '../components/TripTransactionFields';
+import { useTrips } from '../hooks/useTrips';
+import { calculateCurrencyConversion } from '../lib/trips';
 
 type ExpenseForm = {
   occurred_on: string;
@@ -17,6 +21,7 @@ type ExpenseForm = {
   merchant: string;
   payment_method: string;
   notes: string;
+  trip: TripTransactionValue;
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -29,11 +34,13 @@ const emptyExpenseForm = (category = ''): ExpenseForm => ({
   merchant: '',
   payment_method: 'Credit Card',
   notes: '',
+  trip: { tripId: '', exchangeRate: '', actualHomeAmount: '' },
 });
 
 export function Transactions() {
   const { user } = useAuth();
   const { categories, merchantRules, profile, refresh } = useFinanceData({ recentTransactionLimit: 0, includeWealth: false });
+  const { trips } = useTrips({ includeTransactions: false });
   const currency = profile?.currency ?? 'MYR';
   const activeCategories = categories.filter((category) => !category.is_archived);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -59,7 +66,7 @@ export function Transactions() {
     const to = from + pageSize - 1;
     let query = supabase
       .from('transactions')
-      .select('id,user_id,occurred_on,amount,type,category,category_id,merchant,payment_method,notes,tags,recurring_income_id,recurring_expense_id,created_at,updated_at')
+      .select('id,user_id,occurred_on,amount,type,category,category_id,merchant,payment_method,notes,tags,recurring_income_id,recurring_expense_id,trip_id,original_amount,original_currency,exchange_rate,home_currency_amount,created_at,updated_at')
       .eq('user_id', user.id);
 
     if (categoryFilter !== 'all') query = query.eq('category', categoryFilter);
@@ -95,12 +102,17 @@ export function Transactions() {
     setEditingId(transaction.id);
     setEditingForm({
       occurred_on: transaction.occurred_on,
-      amount: String(transaction.amount),
+      amount: String(transaction.original_amount ?? transaction.amount),
       type: transaction.type,
       category: transaction.category,
       merchant: transaction.merchant ?? '',
       payment_method: transaction.payment_method ?? 'Credit Card',
       notes: transaction.notes ?? '',
+      trip: {
+        tripId: transaction.trip_id ?? '',
+        exchangeRate: transaction.exchange_rate ? String(transaction.exchange_rate) : '',
+        actualHomeAmount: transaction.home_currency_amount ? String(transaction.home_currency_amount) : '',
+      },
     });
   }
 
@@ -108,19 +120,43 @@ export function Transactions() {
     event.preventDefault();
     if (!editingId) return;
     const original = transactions.find((transaction) => transaction.id === editingId);
-    await supabase
+    const selectedTrip = trips.find((trip) => trip.id === editingForm.trip.tripId) ?? null;
+    const originalAmount = Number(editingForm.amount);
+    const rate = Number(editingForm.trip.exchangeRate);
+    if (!Number.isFinite(originalAmount) || originalAmount <= 0) {
+      setListError('Amount must be greater than zero.');
+      return;
+    }
+    if (selectedTrip && (!Number.isFinite(rate) || rate <= 0)) {
+      setListError('Exchange rate must be greater than zero.');
+      return;
+    }
+    const actualHomeAmount = editingForm.trip.actualHomeAmount ? Number(editingForm.trip.actualHomeAmount) : null;
+    const conversion = selectedTrip ? calculateCurrencyConversion(originalAmount, rate, actualHomeAmount) : null;
+    const { error: updateError } = await supabase
       .from('transactions')
       .update({
         occurred_on: editingForm.occurred_on,
-        amount: Number(editingForm.amount),
+        amount: conversion?.homeAmount ?? originalAmount,
         type: editingForm.type,
         category: editingForm.category,
         category_id: activeCategories.find((category) => category.name === editingForm.category)?.id ?? null,
         merchant: editingForm.merchant || null,
         payment_method: editingForm.payment_method,
         notes: editingForm.notes || null,
+        trip_id: selectedTrip?.id ?? null,
+        original_amount: selectedTrip ? originalAmount : null,
+        original_currency: selectedTrip?.destination_currency ?? null,
+        exchange_rate: conversion?.exchangeRate ?? null,
+        home_currency_amount: conversion?.homeAmount ?? null,
       })
-      .eq('id', editingId);
+      .eq('id', editingId)
+      .eq('user_id', user?.id ?? '');
+
+    if (updateError) {
+      setListError(updateError.message);
+      return;
+    }
 
     const learnedMerchant = editingForm.merchant || original?.merchant || '';
     if (user && learnedMerchant && original?.category !== editingForm.category) {
@@ -221,6 +257,7 @@ export function Transactions() {
               isEditing={editingId === transaction.id}
               editingForm={editingForm}
               activeCategories={activeCategories}
+              trips={trips}
               setEditingForm={setEditingForm}
               onEdit={() => startEditing(transaction)}
               onDelete={() => remove(transaction.id)}
@@ -244,21 +281,39 @@ export function Transactions() {
 function EditExpenseForm({
   form,
   activeCategories,
+  trips,
   setForm,
   onCancel,
   onSave,
 }: {
   form: ExpenseForm;
   activeCategories: Array<{ id: string; name: string }>;
+  trips: ReturnType<typeof useTrips>['trips'];
   setForm: (form: ExpenseForm) => void;
   onCancel: () => void;
   onSave: (event: FormEvent) => void;
 }) {
+  function updateTrip(trip: TripTransactionValue) {
+    let amount = form.amount;
+    if (form.trip.tripId && !trip.tripId) {
+      const originalAmount = Number(form.amount);
+      const rate = Number(form.trip.exchangeRate);
+      const actualHomeAmount = form.trip.actualHomeAmount ? Number(form.trip.actualHomeAmount) : null;
+      if (originalAmount > 0 && rate > 0) {
+        amount = String(calculateCurrencyConversion(originalAmount, rate, actualHomeAmount).homeAmount);
+      }
+    }
+    setForm({ ...form, amount, trip });
+  }
+
   return (
     <form onSubmit={onSave} className="grid gap-3 md:grid-cols-2 xl:grid-cols-[130px_130px_130px_1fr_170px_170px_auto]">
       <Input type="date" value={form.occurred_on} onChange={(event) => setForm({ ...form, occurred_on: event.target.value })} required />
       <Input type="number" min="0.01" step="0.01" value={form.amount} onChange={(event) => setForm({ ...form, amount: event.target.value })} required />
-      <Select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value as TransactionType })}>
+      <Select value={form.type} onChange={(event) => {
+        const type = event.target.value as TransactionType;
+        setForm({ ...form, type, trip: type === 'expense' ? form.trip : { tripId: '', exchangeRate: '', actualHomeAmount: '' } });
+      }}>
         <option value="expense">Expense</option>
         <option value="income">Income</option>
       </Select>
@@ -276,6 +331,15 @@ function EditExpenseForm({
       <div className="md:col-span-2 xl:col-span-7">
         <TextArea rows={2} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} placeholder="Notes" />
       </div>
+      <div className="contents xl:[&>*]:col-span-7">
+        <TripTransactionFields
+          trips={trips}
+          value={form.trip}
+          originalAmount={form.amount}
+          disabled={form.type !== 'expense'}
+          onChange={updateTrip}
+        />
+      </div>
     </form>
   );
 }
@@ -286,6 +350,7 @@ function MobileTransactionCard({
   isEditing,
   editingForm,
   activeCategories,
+  trips,
   setEditingForm,
   onEdit,
   onDelete,
@@ -297,6 +362,7 @@ function MobileTransactionCard({
   isEditing: boolean;
   editingForm: ExpenseForm;
   activeCategories: Array<{ id: string; name: string }>;
+  trips: ReturnType<typeof useTrips>['trips'];
   setEditingForm: (form: ExpenseForm) => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -306,7 +372,7 @@ function MobileTransactionCard({
   if (isEditing) {
     return (
       <div className="rounded-[20px] border border-indigo-100 bg-indigo-50/60 p-4">
-        <EditExpenseForm form={editingForm} activeCategories={activeCategories} setForm={setEditingForm} onCancel={onCancel} onSave={onSave} />
+        <EditExpenseForm form={editingForm} activeCategories={activeCategories} trips={trips} setForm={setEditingForm} onCancel={onCancel} onSave={onSave} />
       </div>
     );
   }
@@ -318,6 +384,7 @@ function MobileTransactionCard({
           <p className="truncate font-sora font-semibold text-ink">{transaction.merchant ?? transaction.category}</p>
           <p className="mt-1 text-sm text-slate-500">{transaction.occurred_on} · <span className="font-medium text-indigo-600">{transaction.category}</span></p>
           <p className="mt-1 text-sm text-slate-500">{transaction.payment_method ?? '-'} · <span className="capitalize">{transaction.type}</span></p>
+          {transaction.trip_id ? <p className="mt-2 inline-flex rounded-full bg-purple-50 px-2.5 py-1 text-xs font-semibold text-purple-700">Travel expense</p> : null}
         </div>
         <p className={`shrink-0 font-sora font-semibold ${transaction.type === 'income' ? 'text-emerald-600' : 'text-ink'}`}>{formatCurrency(transaction.amount, currency)}</p>
       </div>

@@ -5,6 +5,7 @@ import { Button, Card, Field, Input, PageHeader, Select } from '../components/ui
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../providers/AuthProvider';
 import { useFinanceData } from '../hooks/useFinanceData';
+import { useLanguage } from '../providers/LanguageProvider';
 
 export function Settings() {
   const { user } = useAuth();
@@ -23,6 +24,7 @@ export function Settings() {
   const [editingRuleMerchant, setEditingRuleMerchant] = useState('');
   const [editingRuleCategory, setEditingRuleCategory] = useState('');
   const [message, setMessage] = useState('');
+  const { language, setLanguage, t } = useLanguage();
 
   useEffect(() => {
     setFullName(profile?.full_name ?? '');
@@ -38,14 +40,14 @@ export function Settings() {
       full_name: fullName,
       currency,
     });
-    setMessage(error ? error.message : 'Settings saved.');
+    setMessage(error ? error.message : t('Settings saved.'));
     refresh();
   }
 
   async function updatePassword(event: FormEvent) {
     event.preventDefault();
     const { error } = await supabase.auth.updateUser({ password });
-    setMessage(error ? error.message : 'Password updated.');
+    setMessage(error ? error.message : t('Password updated.'));
     if (!error) setPassword('');
   }
 
@@ -58,7 +60,7 @@ export function Settings() {
       color: categoryColor,
       is_archived: false,
     });
-    setMessage(error ? error.message : 'Category added.');
+    setMessage(error ? error.message : t('Category added.'));
     if (!error) {
       setCategoryName('');
       setCategoryColor('#18a46f');
@@ -77,7 +79,7 @@ export function Settings() {
       .from('categories')
       .update({ name: editingName.trim(), color: editingColor })
       .eq('id', categoryId);
-    setMessage(error ? error.message : 'Category updated.');
+    setMessage(error ? error.message : t('Category updated.'));
     if (!error) {
       setEditingCategoryId(null);
       refresh();
@@ -86,7 +88,7 @@ export function Settings() {
 
   async function setCategoryArchived(categoryId: string, isArchived: boolean) {
     const { error } = await supabase.from('categories').update({ is_archived: isArchived }).eq('id', categoryId);
-    setMessage(error ? error.message : isArchived ? 'Category archived.' : 'Category restored.');
+    setMessage(error ? error.message : t(isArchived ? 'Category archived.' : 'Category restored.'));
     if (!error) refresh();
   }
 
@@ -162,14 +164,24 @@ export function Settings() {
               <Sparkles size={21} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block font-sora text-lg font-semibold text-ink">What’s New</span>
+              <span className="block font-sora text-lg font-semibold text-ink">{t('What’s New')}</span>
               <span className="mt-1 block text-sm text-slate-500">See recent SaveLah features, improvements, and fixes.</span>
             </span>
             <ArrowRight className="shrink-0 text-indigo-400 transition group-hover:translate-x-1" size={20} />
           </Link>
           <Card>
-            <h2 className="mb-1 font-sora text-lg font-semibold text-ink">Profile</h2>
-            <p className="mb-5 text-sm text-slate-500">Your personal details and preferred currency.</p>
+            <h2 className="mb-1 font-sora text-lg font-semibold text-ink">{t('Language')}</h2>
+            <p className="mb-5 text-sm text-slate-500">{t('Choose the language used throughout SaveLah.')}</p>
+            <Field label="Language">
+              <Select value={language} onChange={(event) => setLanguage(event.target.value as 'en' | 'zh-CN')}>
+                <option value="en">English</option>
+                <option value="zh-CN">简体中文</option>
+              </Select>
+            </Field>
+          </Card>
+          <Card>
+            <h2 className="mb-1 font-sora text-lg font-semibold text-ink">{t('Profile')}</h2>
+            <p className="mb-5 text-sm text-slate-500">{t('Your personal details and preferred currency.')}</p>
             <form onSubmit={submit} className="space-y-4">
               <Field label="Email"><Input value={user?.email ?? ''} disabled /></Field>
               <Field label="Full name"><Input value={fullName} onChange={(event) => setFullName(event.target.value)} /></Field>
@@ -178,8 +190,8 @@ export function Settings() {
             </form>
           </Card>
           <Card>
-            <h2 className="mb-1 font-sora text-lg font-semibold text-ink">Password</h2>
-            <p className="mb-5 text-sm text-slate-500">Keep your SaveLah account protected.</p>
+            <h2 className="mb-1 font-sora text-lg font-semibold text-ink">{t('Password')}</h2>
+            <p className="mb-5 text-sm text-slate-500">{t('Keep your SaveLah account protected.')}</p>
             <form onSubmit={updatePassword} className="space-y-4">
               <Field label="New password"><Input type="password" minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} required /></Field>
               <Button type="submit">Update password</Button>
@@ -189,8 +201,8 @@ export function Settings() {
 
         <Card>
           <div className="mb-5">
-            <h2 className="font-sora text-lg font-semibold text-ink">Category Management</h2>
-            <p className="mt-1 text-sm text-slate-600">Active categories appear throughout SaveLah. Use the eye button to include or exclude a category from dashboard spending only.</p>
+            <h2 className="font-sora text-lg font-semibold text-ink">{t('Category Management')}</h2>
+            <p className="mt-1 text-sm text-slate-600">{t('Active categories appear throughout SaveLah. Use the eye button to include or exclude a category from dashboard spending only.')}</p>
           </div>
 
           <form onSubmit={addCategory} className="mb-6 grid gap-4 sm:grid-cols-[1fr_120px_auto]">
@@ -206,7 +218,7 @@ export function Settings() {
           </form>
 
           <CategoryList
-            title="Active categories"
+            title={t('Active categories')}
             categories={activeCategories}
             editingCategoryId={editingCategoryId}
             editingName={editingName}
@@ -221,7 +233,7 @@ export function Settings() {
 
           <div className="mt-8">
             <CategoryList
-              title="Archived categories"
+              title={t('Archived categories')}
               categories={archivedCategories}
               editingCategoryId={editingCategoryId}
               editingName={editingName}
@@ -237,8 +249,8 @@ export function Settings() {
 
         <Card className="xl:col-span-2">
           <div className="mb-5">
-            <h2 className="font-sora text-lg font-semibold text-ink">Merchant Rules</h2>
-            <p className="mt-1 text-sm text-slate-600">Learned rules override defaults and power future auto-categorization.</p>
+            <h2 className="font-sora text-lg font-semibold text-ink">{t('Merchant Rules')}</h2>
+            <p className="mt-1 text-sm text-slate-600">{t('Learned rules override defaults and power future auto-categorization.')}</p>
           </div>
 
           <form onSubmit={addMerchantRule} className="mb-6 grid gap-4 sm:grid-cols-[1fr_180px_auto]">
@@ -256,7 +268,7 @@ export function Settings() {
           </form>
 
           <MerchantRuleList
-            title="Learned merchant rules"
+            title={t('Learned merchant rules')}
             rules={learnedRules}
             activeCategories={activeCategories}
             editingRuleId={editingRuleId}
@@ -270,7 +282,7 @@ export function Settings() {
           />
 
           <div className="mt-8">
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Default merchant rules</h3>
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">{t('Default merchant rules')}</h3>
             <div className="grid gap-2 sm:grid-cols-2">
               {defaultRules.map((rule) => (
                 <div key={rule.id} className="flex items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm">

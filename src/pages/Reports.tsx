@@ -3,16 +3,20 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { Card, ErrorMessage, Field, Input, PageHeader, Skeleton, StatCard } from '../components/ui';
 import { currentMonthDate, formatCurrency, formatPercent } from '../lib/format';
 import { useFinanceData } from '../hooks/useFinanceData';
+import { TravelReportingToggle } from '../components/TravelReportingToggle';
+import { useTravelReportingPreference } from '../hooks/useTravelReportingPreference';
 
 export function Reports() {
   const [startDate, setStartDate] = useState(currentMonthDate());
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
+  const { includeTravelExpenses, setIncludeTravelExpenses } = useTravelReportingPreference();
   const { categorySummary, summary, profile, loading, error } = useFinanceData({
     startDate,
     endDate,
     recentTransactionLimit: 0,
     includeWealth: false,
     applyDashboardExclusions: true,
+    includeTravelExpenses,
   });
   const currency = profile?.currency ?? 'MYR';
   const byCategory = categorySummary.map((item) => ({ category: item.category, amount: item.spending })).sort((a, b) => b.amount - a.amount);
@@ -24,9 +28,12 @@ export function Reports() {
         title="Reports"
         description="Analyze category concentration, cash flow, savings performance, and budget health for a selected period."
         action={
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="From"><Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /></Field>
-            <Field label="To"><Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} /></Field>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="From"><Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /></Field>
+              <Field label="To"><Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} /></Field>
+            </div>
+            <TravelReportingToggle checked={includeTravelExpenses} onChange={setIncludeTravelExpenses} />
           </div>
         }
       />
@@ -40,7 +47,7 @@ export function Reports() {
       <div className={loading ? 'hidden' : '-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 xl:grid-cols-4'}>
         <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Cash flow" value={formatCurrency(summary.income - summary.spending, currency)} /></div>
         <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Savings rate" value={formatPercent(summary.savingsRate)} /></div>
-        <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Budget used" value={formatPercent(summary.budgetUsedPercent)} detail={`${formatCurrency(summary.spending, currency)} of ${formatCurrency(summary.budget, currency)}`} /></div>
+        <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Budget used" value={formatPercent(summary.budgetUsedPercent)} detail={`${formatCurrency(summary.budgetSpending, currency)} of ${formatCurrency(summary.budget, currency)}`} /></div>
         <div className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-auto sm:max-w-none"><StatCard label="Largest category" value={byCategory[0]?.category ?? 'No expenses'} detail={byCategory[0] ? formatCurrency(byCategory[0].amount, currency) : undefined} /></div>
       </div>
 
@@ -66,7 +73,7 @@ export function Reports() {
               </tr>
               <tr className="border-b border-slate-100">
                 <td className="py-3 font-medium">Spending</td>
-                <td className="text-right">{formatCurrency(summary.spending, currency)}</td>
+                <td className="text-right">{formatCurrency(summary.budgetSpending, currency)}</td>
                 <td className="text-right">-</td>
                 <td className="text-right">Tracked</td>
               </tr>

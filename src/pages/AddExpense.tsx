@@ -1,20 +1,30 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { CalendarClock, Save } from 'lucide-react';
 import { Button, Card, Field, Input, PageHeader, Select, TextArea } from '../components/ui';
 import { PAYMENT_METHODS } from '../constants/finance';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../providers/AuthProvider';
 import { useFinanceData } from '../hooks/useFinanceData';
+import { useTrips } from '../hooks/useTrips';
+import { TripTransactionFields, type TripTransactionValue } from '../components/TripTransactionFields';
+import { calculateCurrencyConversion } from '../lib/trips';
 
 export function AddExpense() {
   const { user } = useAuth();
   const { categories, transactions } = useFinanceData({ includeWealth: false });
+  const { trips } = useTrips({ includeTransactions: false });
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [repeatMonthly, setRepeatMonthly] = useState(false);
   const [recurringDay, setRecurringDay] = useState(String(new Date().getDate()));
+  const [tripFields, setTripFields] = useState<TripTransactionValue>({
+    tripId: '',
+    exchangeRate: '',
+    actualHomeAmount: '',
+  });
   const [form, setForm] = useState({
     occurred_on: new Date().toISOString().slice(0, 10),
     amount: '',
@@ -24,6 +34,7 @@ export function AddExpense() {
     notes: '',
   });
   const activeCategories = categories.filter((category) => !category.is_archived);
+  const selectedTrip = trips.find((trip) => trip.id === tripFields.tripId) ?? null;
   const recentMerchants = useMemo(() => {
     const counts = transactions.reduce<Record<string, number>>((acc, transaction) => {
       const merchant = transaction.merchant?.trim();
@@ -44,17 +55,46 @@ export function AddExpense() {
     }
   }, [activeCategories, form.category]);
 
+  useEffect(() => {
+    const requestedTripId = searchParams.get('trip');
+    const requestedTrip = trips.find((trip) => trip.id === requestedTripId);
+    if (requestedTrip && !tripFields.tripId) {
+      setTripFields({
+        tripId: requestedTrip.id,
+        exchangeRate: String(requestedTrip.default_exchange_rate),
+        actualHomeAmount: '',
+      });
+      setRepeatMonthly(false);
+    }
+  }, [searchParams, tripFields.tripId, trips]);
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!user) return;
     setSaving(true);
     setMessage('');
 
+    const originalAmount = Number(form.amount);
+    const rate = Number(tripFields.exchangeRate);
+    const actualHomeAmount = tripFields.actualHomeAmount ? Number(tripFields.actualHomeAmount) : null;
+    if (!Number.isFinite(originalAmount) || originalAmount <= 0) {
+      setSaving(false);
+      setMessage('Amount must be greater than zero.');
+      return;
+    }
+    if (selectedTrip && (!Number.isFinite(rate) || rate <= 0)) {
+      setSaving(false);
+      setMessage('Exchange rate must be greater than zero.');
+      return;
+    }
+    const conversion = selectedTrip
+      ? calculateCurrencyConversion(originalAmount, rate, actualHomeAmount)
+      : null;
     const selectedCategory = activeCategories.find((category) => category.name === form.category);
     const { error } = await supabase.from('transactions').insert({
       user_id: user.id,
       occurred_on: form.occurred_on,
-      amount: Number(form.amount),
+      amount: conversion?.homeAmount ?? originalAmount,
       type: 'expense',
       category: form.category,
       category_id: selectedCategory?.id ?? null,
@@ -64,6 +104,11 @@ export function AddExpense() {
       tags: [],
       recurring_income_id: null,
       recurring_expense_id: null,
+      trip_id: selectedTrip?.id ?? null,
+      original_amount: selectedTrip ? originalAmount : null,
+      original_currency: selectedTrip?.destination_currency ?? null,
+      exchange_rate: conversion?.exchangeRate ?? null,
+      home_currency_amount: conversion?.homeAmount ?? null,
     });
 
     if (error) {
@@ -72,7 +117,7 @@ export function AddExpense() {
       return;
     }
 
-    if (repeatMonthly) {
+    if (repeatMonthly && !selectedTrip) {
       const [year, month] = form.occurred_on.split('-').map(Number);
       const nextMonth = new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10);
       const { error: scheduleError } = await supabase.from('recurring_expenses').insert({
@@ -97,7 +142,7 @@ export function AddExpense() {
     }
 
     setSaving(false);
-    navigate('/transactions');
+    navigate(selectedTrip ? `/trips/${selectedTrip.id}` : '/transactions');
   }
 
   return (
@@ -109,8 +154,17 @@ export function AddExpense() {
       />
       <Card className="mx-auto max-w-3xl">
         <form onSubmit={submit} className="grid gap-4 pb-20 sm:grid-cols-2 sm:pb-0">
+          <TripTransactionFields
+            trips={trips}
+            value={tripFields}
+            originalAmount={form.amount}
+            onChange={(value) => {
+              setTripFields(value);
+              if (value.tripId) setRepeatMonthly(false);
+            }}
+          />
           <div className="order-1 sm:order-none">
-            <Field label="Amount">
+            <Field label={selectedTrip ? `Amount in ${selectedTrip.destination_currency}` : 'Amount'}>
               <Input
                 className="py-3 text-lg font-semibold"
                 type="number"
@@ -163,7 +217,7 @@ export function AddExpense() {
               <TextArea className="text-base" rows={3} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
             </Field>
           </div>
-          <div className="order-7 rounded-[20px] border border-indigo-100 bg-indigo-50/70 p-4 sm:order-none sm:col-span-2">
+          {!selectedTrip ? <div className="order-7 rounded-[20px] border border-indigo-100 bg-indigo-50/70 p-4 sm:order-none sm:col-span-2">
             <label className="flex cursor-pointer items-start justify-between gap-4">
               <span className="flex items-start gap-3">
                 <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white text-indigo-600 shadow-sm">
@@ -196,7 +250,7 @@ export function AddExpense() {
                 <p className="mt-2 text-xs text-slate-500">For shorter months, SaveLah uses the final day of the month.</p>
               </div>
             ) : null}
-          </div>
+          </div> : null}
           <datalist id="add-expense-recent-merchants">
             {recentMerchants.map((merchant) => <option key={merchant} value={merchant} />)}
           </datalist>

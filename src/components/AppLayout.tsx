@@ -1,4 +1,4 @@
-import { Banknote, Bot, CreditCard, FileInput, FileText, Gauge, LogOut, Menu, PiggyBank, Plus, Settings, TrendingUp, X } from 'lucide-react';
+import { Banknote, Bot, CreditCard, FileInput, FileText, Gauge, LogOut, Menu, PiggyBank, Plane, Plus, Settings, TrendingUp, X } from 'lucide-react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 import { clsx } from 'clsx';
@@ -6,12 +6,14 @@ import { useState } from 'react';
 import { PwaInstallPrompt } from './PwaInstallPrompt';
 import { BrandLogo } from './BrandLogo';
 import { WhatsNewModal } from './WhatsNewModal';
+import { useLanguage } from '../providers/LanguageProvider';
 
 const links = [
   { to: '/', label: 'Dashboard', icon: Gauge },
   { to: '/add-expense', label: 'Add', icon: Plus },
   { to: '/income', label: 'Income', icon: Banknote },
   { to: '/transactions', label: 'Transactions', icon: CreditCard },
+  { to: '/trips', label: 'Trips', icon: Plane },
   { to: '/import-export', label: 'Import', icon: FileInput },
   { to: '/budgets', label: 'Budgets', icon: PiggyBank },
   { to: '/automations', label: 'Automations', icon: Bot },
@@ -32,6 +34,7 @@ export function AppLayout() {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { t } = useLanguage();
 
   return (
     <div className="min-h-screen bg-white">
@@ -58,7 +61,7 @@ export function AppLayout() {
               }
             >
               <Icon size={18} />
-              {label}
+              {t(label)}
             </NavLink>
           ))}
         </nav>
@@ -67,7 +70,7 @@ export function AppLayout() {
           className="absolute bottom-5 left-4 right-4 flex min-h-11 items-center gap-3 rounded-2xl px-3.5 py-2 text-sm font-medium text-slate-500 transition hover:bg-white hover:text-ink"
         >
           <LogOut size={18} />
-          Logout
+          {t('Logout')}
         </button>
       </aside>
 
@@ -78,7 +81,7 @@ export function AppLayout() {
             <button
               onClick={() => setMenuOpen(true)}
               className="grid h-11 w-11 place-items-center rounded-2xl text-slate-500 transition hover:bg-slate-100"
-              aria-label="Open navigation menu"
+              aria-label={t('Open navigation menu')}
             >
               <Menu size={22} />
             </button>
@@ -102,7 +105,7 @@ export function AppLayout() {
                 <button
                   onClick={() => setMenuOpen(false)}
                   className="grid h-11 w-11 place-items-center rounded-2xl text-slate-500 hover:bg-slate-100"
-                  aria-label="Close navigation menu"
+                  aria-label={t('Close navigation menu')}
                 >
                   <X size={22} />
                 </button>
@@ -121,7 +124,7 @@ export function AppLayout() {
                     }
                   >
                     <Icon size={19} />
-                    {label}
+                    {t(label)}
                   </NavLink>
                 ))}
               </nav>
@@ -130,7 +133,7 @@ export function AppLayout() {
                 className="mt-5 flex min-h-12 w-full items-center gap-3 rounded-2xl border border-slate-200 px-3.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
               >
                 <LogOut size={19} />
-                Logout
+                {t('Logout')}
               </button>
             </aside>
           </div>
@@ -144,7 +147,7 @@ export function AppLayout() {
           <NavLink
             to="/add-expense"
             className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-4 z-30 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-[0_16px_35px_rgba(99,102,241,0.35)] transition hover:-translate-y-0.5 active:scale-95 lg:hidden"
-            aria-label="Quick add expense"
+            aria-label={t('Quick add expense')}
           >
             <Plus size={25} />
           </NavLink>
@@ -164,7 +167,7 @@ export function AppLayout() {
               }
             >
               <Icon size={21} />
-              <span>{label}</span>
+              <span>{t(label)}</span>
             </NavLink>
           ))}
         </nav>

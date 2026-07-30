@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../providers/AuthProvider';
-import type { Asset, Budget, Category, Investment, Liability, MerchantRule, MonthlyBudget, Profile, Property, Transaction } from '../types/database';
+import type { Asset, Budget, Category, Investment, Liability, MerchantRule, MonthlyBudget, Profile, Property, RecurringExpense, Transaction } from '../types/database';
 import { currentMonthDate } from '../lib/format';
 
 type DailySummary = {
@@ -15,6 +15,14 @@ type CategorySummary = {
   spending: number;
 };
 
+type RecurringExpenseProjection = {
+  id: string;
+  occurred_on: string;
+  amount: number;
+  category: string;
+  category_id: string | null;
+};
+
 type FinanceData = {
   profile: Profile | null;
   categories: Category[];
@@ -22,6 +30,8 @@ type FinanceData = {
   transactions: Transaction[];
   dailySummary: DailySummary[];
   categorySummary: CategorySummary[];
+  budgetCategorySummary: CategorySummary[];
+  recurringExpenseProjections: RecurringExpenseProjection[];
   monthlyBudgets: MonthlyBudget[];
   budgets: Budget[];
   investments: Investment[];
@@ -37,6 +47,8 @@ type FinanceDataOptions = {
   recentTransactionLimit?: number;
   includeWealth?: boolean;
   applyDashboardExclusions?: boolean;
+  includeRecurringExpenseSchedules?: boolean;
+  includeTravelExpenses?: boolean;
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -45,6 +57,26 @@ const excludedBudgetSpendingCategories = new Set(['income', 'credit card repayme
 
 function isBudgetSpendingCategory(category: string) {
   return !excludedBudgetSpendingCategories.has(category.trim().toLowerCase());
+}
+
+function recurringExpenseDate(monthStart: string, dayOfMonth: number) {
+  const [year, month] = monthStart.split('-').map(Number);
+  const lastDay = new Date(year, month, 0).getDate();
+  const day = Math.min(dayOfMonth, lastDay);
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function mergeCategorySummary(baseSummary: CategorySummary[], additions: RecurringExpenseProjection[]) {
+  if (additions.length === 0) return baseSummary;
+
+  const spending = new Map(baseSummary.map((item) => [item.category, item.spending]));
+  additions.forEach((item) => {
+    spending.set(item.category, (spending.get(item.category) ?? 0) + item.amount);
+  });
+
+  return [...spending.entries()]
+    .map(([category, amount]) => ({ category, spending: amount }))
+    .sort((a, b) => b.spending - a.spending);
 }
 
 function processRecurringTransactions(userId: string) {
@@ -68,6 +100,8 @@ const emptyData: FinanceData = {
   transactions: [],
   dailySummary: [],
   categorySummary: [],
+  budgetCategorySummary: [],
+  recurringExpenseProjections: [],
   monthlyBudgets: [],
   budgets: [],
   investments: [],
@@ -84,6 +118,8 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
   const recentTransactionLimit = options.recentTransactionLimit ?? 8;
   const includeWealth = options.includeWealth ?? true;
   const applyDashboardExclusions = options.applyDashboardExclusions ?? false;
+  const includeRecurringExpenseSchedules = options.includeRecurringExpenseSchedules ?? false;
+  const includeTravelExpenses = options.includeTravelExpenses ?? false;
   const [data, setData] = useState<FinanceData>(emptyData);
   const [periodSummary, setPeriodSummary] = useState({ income: 0, spending: 0 });
   const [loading, setLoading] = useState(true);
@@ -96,6 +132,24 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
     setError(null);
     await processRecurringTransactions(user.id);
 
+    let recentTransactionsQuery = supabase
+      .from('transactions')
+      .select('id,user_id,occurred_on,amount,type,category,category_id,merchant,payment_method,notes,tags,recurring_income_id,recurring_expense_id,trip_id,original_amount,original_currency,exchange_rate,home_currency_amount,created_at,updated_at')
+      .eq('user_id', user.id)
+      .gte('occurred_on', startDate)
+      .lte('occurred_on', endDate)
+      .order('occurred_on', { ascending: false })
+      .limit(recentTransactionLimit);
+    if (!includeTravelExpenses) {
+      recentTransactionsQuery = recentTransactionsQuery.is('trip_id', null);
+    }
+
+    const summaryArgs = {
+      p_start_date: startDate,
+      p_end_date: endDate,
+      p_include_travel: includeTravelExpenses,
+    };
+
     const [
       profile,
       categories,
@@ -104,6 +158,9 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
       periodSummaryResult,
       dailySummary,
       categorySummary,
+      budgetCategorySummary,
+      recurringExpenses,
+      generatedRecurringExpenses,
       monthlyBudgets,
       budgets,
       investments,
@@ -114,17 +171,32 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
       supabase.from('profiles').select('id,user_id,full_name,currency,monthly_income_target,monthly_budget_target,created_at,updated_at').eq('user_id', user.id).maybeSingle(),
       supabase.from('categories').select('id,user_id,name,color,is_archived,exclude_from_dashboard,created_at,updated_at').eq('user_id', user.id).order('is_archived', { ascending: true }).order('name', { ascending: true }),
       supabase.from('merchant_rules').select('id,user_id,merchant_pattern,category,source,confidence,is_active,created_at,updated_at').or(`user_id.is.null,user_id.eq.${user.id}`).eq('is_active', true).order('source', { ascending: false }).order('merchant_pattern', { ascending: true }),
-      supabase
-        .from('transactions')
-        .select('id,user_id,occurred_on,amount,type,category,category_id,merchant,payment_method,notes,tags,recurring_income_id,recurring_expense_id,created_at,updated_at')
-        .eq('user_id', user.id)
-        .gte('occurred_on', startDate)
-        .lte('occurred_on', endDate)
-        .order('occurred_on', { ascending: false })
-        .limit(recentTransactionLimit),
-      supabase.rpc(applyDashboardExclusions ? 'get_dashboard_period_summary' : 'get_transaction_period_summary', { p_start_date: startDate, p_end_date: endDate }),
-      supabase.rpc(applyDashboardExclusions ? 'get_dashboard_daily_summary' : 'get_transaction_daily_summary', { p_start_date: startDate, p_end_date: endDate }),
-      supabase.rpc(applyDashboardExclusions ? 'get_dashboard_category_summary' : 'get_transaction_category_summary', { p_start_date: startDate, p_end_date: endDate }),
+      recentTransactionsQuery,
+      supabase.rpc(applyDashboardExclusions ? 'get_dashboard_period_summary' : 'get_transaction_period_summary', summaryArgs),
+      supabase.rpc(applyDashboardExclusions ? 'get_dashboard_daily_summary' : 'get_transaction_daily_summary', summaryArgs),
+      supabase.rpc(applyDashboardExclusions ? 'get_dashboard_category_summary' : 'get_transaction_category_summary', summaryArgs),
+      supabase.rpc(applyDashboardExclusions ? 'get_dashboard_category_summary' : 'get_transaction_category_summary', {
+        p_start_date: startDate,
+        p_end_date: endDate,
+        p_include_travel: false,
+      }),
+      includeRecurringExpenseSchedules
+        ? supabase
+          .from('recurring_expenses')
+          .select('id,user_id,merchant,amount,category,category_id,day_of_month,start_month,payment_method,notes,tags,is_active,last_generated_month,created_at,updated_at')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .lte('start_month', budgetMonth)
+        : Promise.resolve({ data: [], error: null }),
+      includeRecurringExpenseSchedules
+        ? supabase
+          .from('transactions')
+          .select('recurring_expense_id')
+          .eq('user_id', user.id)
+          .gte('occurred_on', startDate)
+          .lte('occurred_on', endDate)
+          .not('recurring_expense_id', 'is', null)
+        : Promise.resolve({ data: [], error: null }),
       supabase.from('monthly_budgets').select('id,user_id,month,amount,created_at,updated_at').eq('user_id', user.id).order('month', { ascending: false }),
       supabase.from('budgets').select('id,user_id,category,month,amount,created_at,updated_at').eq('user_id', user.id).order('month', { ascending: false }),
       includeWealth ? supabase.from('investments').select('id,user_id,name,account,quantity,cost_basis,current_value,as_of,created_at,updated_at').eq('user_id', user.id).order('current_value', { ascending: false }) : Promise.resolve({ data: [], error: null }),
@@ -133,7 +205,7 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
       includeWealth ? supabase.from('properties').select('id,user_id,name,address,market_value,mortgage_balance,as_of,created_at,updated_at').eq('user_id', user.id).order('market_value', { ascending: false }) : Promise.resolve({ data: [], error: null }),
     ]);
 
-    const results = [profile, categories, merchantRules, transactions, periodSummaryResult, dailySummary, categorySummary, monthlyBudgets, budgets, investments, assets, liabilities, properties];
+    const results = [profile, categories, merchantRules, transactions, periodSummaryResult, dailySummary, categorySummary, budgetCategorySummary, recurringExpenses, generatedRecurringExpenses, monthlyBudgets, budgets, investments, assets, liabilities, properties];
     const failure = results.find((result) => result.error);
     if (failure?.error) {
       setError(failure.error.message);
@@ -147,6 +219,32 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
     const excludedCategoryIds = new Set(loadedCategories.filter((item) => item.exclude_from_dashboard).map((item) => item.id));
     const excludedCategoryNames = new Set(loadedCategories.filter((item) => item.exclude_from_dashboard).map((item) => item.name.toLowerCase()));
     const loadedTransactions = (transactions.data ?? []) as Transaction[];
+    const generatedRecurringExpenseIds = new Set(
+      ((generatedRecurringExpenses.data ?? []) as Array<{ recurring_expense_id: string | null }>)
+        .map((transaction) => transaction.recurring_expense_id)
+        .filter((id): id is string => Boolean(id)),
+    );
+    const recurringExpenseProjections = ((recurringExpenses.data ?? []) as RecurringExpense[])
+      .map((schedule) => ({
+        id: schedule.id,
+        occurred_on: recurringExpenseDate(budgetMonth, Number(schedule.day_of_month)),
+        amount: Number(schedule.amount),
+        category: schedule.category,
+        category_id: schedule.category_id,
+      }))
+      .filter((schedule) => (
+        schedule.occurred_on >= startDate
+        && schedule.occurred_on <= endDate
+        && !generatedRecurringExpenseIds.has(schedule.id)
+        && (!applyDashboardExclusions || !(
+          (schedule.category_id && excludedCategoryIds.has(schedule.category_id))
+          || (!schedule.category_id && excludedCategoryNames.has(schedule.category.toLowerCase()))
+        ))
+      ));
+    const loadedCategorySummary = (categorySummary.data ?? []).map((item) => ({ category: item.category, spending: Number(item.spending) }));
+    const adjustedCategorySummary = mergeCategorySummary(loadedCategorySummary, recurringExpenseProjections);
+    const loadedBudgetCategorySummary = (budgetCategorySummary.data ?? []).map((item) => ({ category: item.category, spending: Number(item.spending) }));
+    const adjustedBudgetCategorySummary = mergeCategorySummary(loadedBudgetCategorySummary, recurringExpenseProjections);
     const visibleTransactions = applyDashboardExclusions
       ? loadedTransactions.filter((transaction) => transaction.type !== 'expense' || !(
         (transaction.category_id && excludedCategoryIds.has(transaction.category_id))
@@ -160,7 +258,9 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
       merchantRules: (merchantRules.data ?? []) as MerchantRule[],
       transactions: visibleTransactions,
       dailySummary: (dailySummary.data ?? []).map((item) => ({ day: item.day, income: Number(item.income), spending: Number(item.spending) })),
-      categorySummary: (categorySummary.data ?? []).map((item) => ({ category: item.category, spending: Number(item.spending) })),
+      categorySummary: adjustedCategorySummary,
+      budgetCategorySummary: adjustedBudgetCategorySummary,
+      recurringExpenseProjections,
       monthlyBudgets: (monthlyBudgets.data ?? []) as MonthlyBudget[],
       budgets: (budgets.data ?? []) as Budget[],
       investments: (investments.data ?? []) as Investment[],
@@ -169,7 +269,7 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
       properties: (properties.data ?? []) as Property[],
     });
     setLoading(false);
-  }, [applyDashboardExclusions, endDate, includeWealth, recentTransactionLimit, startDate, user]);
+  }, [applyDashboardExclusions, budgetMonth, endDate, includeRecurringExpenseSchedules, includeTravelExpenses, includeWealth, recentTransactionLimit, startDate, user]);
 
   useEffect(() => {
     refresh();
@@ -190,7 +290,7 @@ export function useFinanceData(options: FinanceDataOptions = {}) {
     );
     const categoryBudgetTotal = includedBudgets.reduce((sum, item) => sum + item.amount, 0);
     const budget = monthlyBudgetRecord?.amount ?? categoryBudgetTotal;
-    const budgetCategorySummary = data.categorySummary.filter((item) => isBudgetSpendingCategory(item.category));
+    const budgetCategorySummary = data.budgetCategorySummary.filter((item) => isBudgetSpendingCategory(item.category));
     const budgetSpending = budgetCategorySummary.reduce((sum, item) => sum + item.spending, 0);
     const budgetUsedPercent = budget > 0 ? budgetSpending / budget : 0;
     const budgetAlert = budgetUsedPercent >= 1 ? 'critical' : budgetUsedPercent >= 0.8 ? 'warning' : 'healthy';

@@ -1,15 +1,24 @@
 import { useState } from 'react';
 import { ArrowDownRight, ArrowUpRight, PiggyBank, ReceiptText, WalletCards } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Card, ErrorMessage, Field, Input, PageHeader, Skeleton, StatCard } from '../components/ui';
+import { Card, ErrorMessage, Field, Input, PageHeader, Skeleton } from '../components/ui';
 import { CHART_COLORS } from '../constants/finance';
 import { currentMonthDate, formatCurrency, formatPercent } from '../lib/format';
 import { useFinanceData } from '../hooks/useFinanceData';
+import { TravelReportingToggle } from '../components/TravelReportingToggle';
+import { useTravelReportingPreference } from '../hooks/useTravelReportingPreference';
 
 export function Dashboard() {
   const [startDate, setStartDate] = useState(currentMonthDate());
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
-  const { transactions, dailySummary, categorySummary, summary, profile, categories, loading, error } = useFinanceData({ startDate, endDate, recentTransactionLimit: 8, applyDashboardExclusions: true });
+  const { includeTravelExpenses, setIncludeTravelExpenses } = useTravelReportingPreference();
+  const { transactions, dailySummary, categorySummary, summary, profile, categories, loading, error } = useFinanceData({
+    startDate,
+    endDate,
+    recentTransactionLimit: 8,
+    applyDashboardExclusions: true,
+    includeTravelExpenses,
+  });
   const currency = profile?.currency ?? 'MYR';
   const excludedCategoryCount = categories.filter((category) => category.exclude_from_dashboard).length;
   const trend = dailySummary.map((item) => ({ date: item.day.slice(5), spending: item.spending, income: item.income }));
@@ -33,9 +42,12 @@ export function Dashboard() {
         title="Dashboard"
         description="A private date-bounded view of income, spending, budgets, and investments."
         action={
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="From"><Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /></Field>
-            <Field label="To"><Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} /></Field>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="From"><Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /></Field>
+              <Field label="To"><Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} /></Field>
+            </div>
+            <TravelReportingToggle checked={includeTravelExpenses} onChange={setIncludeTravelExpenses} />
           </div>
         }
       />
@@ -56,7 +68,7 @@ export function Dashboard() {
         <div className="absolute -bottom-24 right-24 h-56 w-56 rounded-full border border-white/10" />
         <div className="relative grid gap-7 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
           <div>
-            <p className="text-sm font-semibold text-indigo-100">Current month spending</p>
+            <p className="text-sm font-semibold text-indigo-100">{includeTravelExpenses ? 'Spending including travel' : 'Current month spending'}</p>
             <p className="mt-3 text-4xl font-bold sm:text-5xl">{formatCurrency(summary.spending, currency)}</p>
             <div className="mt-5 flex flex-wrap items-center gap-3 text-sm">
               <span className="rounded-full bg-white/15 px-3 py-1.5 font-medium backdrop-blur">
@@ -93,7 +105,7 @@ export function Dashboard() {
       </div>
 
       <div className={loading ? 'hidden' : 'mt-5 grid gap-4 sm:grid-cols-2'}>
-        <KpiCard icon={ReceiptText} label="Budget used" value={formatPercent(summary.budgetUsedPercent)} tone="indigo" detail={`${formatCurrency(summary.spending, currency)} of ${formatCurrency(summary.budget, currency)}`} compact />
+        <KpiCard icon={ReceiptText} label="Budget used" value={formatPercent(summary.budgetUsedPercent)} tone="indigo" detail={`${formatCurrency(summary.budgetSpending, currency)} of ${formatCurrency(summary.budget, currency)}`} compact />
         <KpiCard icon={WalletCards} label="Investments" value={formatCurrency(summary.investmentValue, currency)} tone="success" compact />
       </div>
 
@@ -102,7 +114,7 @@ export function Dashboard() {
           <SectionHeading title="Budget pulse" description="How this month's spending compares with your plan." />
           <div className="h-60 sm:h-72">
             <ResponsiveContainer>
-              <BarChart data={[{ name: 'Budget', spent: summary.spending, remaining: summary.remainingBudget }]}>
+              <BarChart data={[{ name: 'Budget', spent: summary.budgetSpending, remaining: summary.remainingBudget }]}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />

@@ -15,6 +15,8 @@ import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
 import { SignUp } from './pages/SignUp';
 import { Transactions } from './pages/Transactions';
+import { TripDashboard } from './pages/TripDashboard';
+import { Trips } from './pages/Trips';
 
 export default function App() {
   return (
@@ -27,6 +29,8 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="/add-expense" element={<AddExpense />} />
           <Route path="/transactions" element={<Transactions />} />
+          <Route path="/trips" element={<Trips />} />
+          <Route path="/trips/:tripId" element={<TripDashboard />} />
           <Route path="/import-export" element={<ImportExport />} />
           <Route path="/budgets" element={<Budgets />} />
           <Route path="/automations" element={<Automations />} />

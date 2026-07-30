@@ -13,6 +13,29 @@ export type ChangeLogEntry = {
 
 export const CHANGELOG: ChangeLogEntry[] = [
   {
+    version: '1.7.0',
+    date: '2026-07-29',
+    title: 'Travel spending, kept separate',
+    summary: 'Plan trips, convert foreign-currency expenses manually, and review every journey without mixing it into daily budgets.',
+    changes: [
+      { type: 'new', text: 'Added trip planning with destinations, dates, statuses, dedicated budgets, and historical trip dashboards.' },
+      { type: 'new', text: 'Added optional trip assignment and manual foreign-currency conversion to the existing expense flow.' },
+      { type: 'new', text: 'Added category, daily, payment-method, recent-activity, and budget-versus-actual trip insights.' },
+      { type: 'improved', text: 'Daily dashboards, reports, analytics, and monthly budgets now exclude travel by default, with an Include travel expenses reporting toggle.' },
+    ],
+  },
+  {
+    version: '1.6.0',
+    date: '2026-07-03',
+    title: 'Better budget planning',
+    summary: 'Budgets now show your monthly plan, category allocations, and real spending side by side.',
+    changes: [
+      { type: 'new', text: 'Added monthly budget editing and category allocation inside the existing Budget section.' },
+      { type: 'new', text: 'Added allocation charts, category percentages, remaining amounts, and budget status badges.' },
+      { type: 'improved', text: 'Budget spending now excludes Income and Credit Card Repayment while still counting expense transfers.' },
+    ],
+  },
+  {
     version: '1.5.3',
     date: '2026-06-23',
     title: 'Cleaner reports totals',

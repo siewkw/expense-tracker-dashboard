@@ -2,7 +2,6 @@ import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { Download, FileSpreadsheet, Upload } from 'lucide-react';
 import { Button, Card, Field, Input, PageHeader, Select } from '../components/ui';
 import { EmptyState } from '../components/EmptyState';
-import { PAYMENT_METHODS } from '../constants/finance';
 import { categorizeMerchant } from '../lib/categorization';
 import { downloadTextFile, parseCsv, toCsv, toExcelHtml, type CsvRow } from '../lib/csv';
 import { formatCurrency } from '../lib/format';

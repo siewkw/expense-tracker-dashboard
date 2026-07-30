@@ -85,6 +85,7 @@ export function Budgets() {
     endDate: monthEndDate(selectedMonth),
     budgetMonth: selectedMonth,
     recentTransactionLimit: 0,
+    includeRecurringExpenseSchedules: true,
   });
 
   const currency = profile?.currency ?? 'MYR';

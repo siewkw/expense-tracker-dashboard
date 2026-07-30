@@ -12,3 +12,7 @@ Keep each entry concise and user-facing:
 - Put the newest release first.
 
 Database-only maintenance, formatting, and other invisible development work do not need an in-app entry unless they affect users.
+
+## 1.7.0 — 2026-07-29
+
+Added Trips: trip creation and status management, optional transaction assignment, manual foreign-currency conversion, dedicated trip dashboards, secure ownership policies, and travel-exclusion controls for normal reporting.

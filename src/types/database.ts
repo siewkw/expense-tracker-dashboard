@@ -14,6 +14,29 @@ export type Transaction = {
   tags: string[];
   recurring_income_id: string | null;
   recurring_expense_id: string | null;
+  trip_id: string | null;
+  original_amount: number | null;
+  original_currency: string | null;
+  exchange_rate: number | null;
+  home_currency_amount: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TripStatus = 'upcoming' | 'active' | 'completed';
+
+export type Trip = {
+  id: string;
+  user_id: string;
+  name: string;
+  destination: string;
+  start_date: string;
+  end_date: string;
+  total_budget: number;
+  home_currency: string;
+  destination_currency: string;
+  default_exchange_rate: number;
+  status: TripStatus;
   created_at: string;
   updated_at: string;
 };
@@ -203,6 +226,7 @@ export type Database = {
       merchant_rules: Table<MerchantRule>;
       recurring_incomes: Table<RecurringIncome>;
       recurring_expenses: Table<RecurringExpense>;
+      trips: Table<Trip>;
       payment_methods: {
         Row: { id: string; user_id: string | null; name: string; created_at: string };
         Insert: { id?: string; user_id?: string | null; name: string; created_at?: string };
@@ -213,27 +237,27 @@ export type Database = {
     Views: Record<string, never>;
     Functions: {
       get_transaction_period_summary: {
-        Args: { p_start_date: string; p_end_date: string };
+        Args: { p_start_date: string; p_end_date: string; p_include_travel?: boolean };
         Returns: { income: number; spending: number }[];
       };
       get_transaction_daily_summary: {
-        Args: { p_start_date: string; p_end_date: string };
+        Args: { p_start_date: string; p_end_date: string; p_include_travel?: boolean };
         Returns: { day: string; income: number; spending: number }[];
       };
       get_transaction_category_summary: {
-        Args: { p_start_date: string; p_end_date: string };
+        Args: { p_start_date: string; p_end_date: string; p_include_travel?: boolean };
         Returns: { category: string; spending: number }[];
       };
       get_dashboard_period_summary: {
-        Args: { p_start_date: string; p_end_date: string };
+        Args: { p_start_date: string; p_end_date: string; p_include_travel?: boolean };
         Returns: { income: number; spending: number }[];
       };
       get_dashboard_daily_summary: {
-        Args: { p_start_date: string; p_end_date: string };
+        Args: { p_start_date: string; p_end_date: string; p_include_travel?: boolean };
         Returns: { day: string; income: number; spending: number }[];
       };
       get_dashboard_category_summary: {
-        Args: { p_start_date: string; p_end_date: string };
+        Args: { p_start_date: string; p_end_date: string; p_include_travel?: boolean };
         Returns: { category: string; spending: number }[];
       };
       get_recurring_subscriptions: {
@@ -261,6 +285,7 @@ export type Database = {
       transaction_type: TransactionType;
       asset_type: Asset['asset_type'];
       liability_type: Liability['liability_type'];
+      trip_status: TripStatus;
     };
     CompositeTypes: Record<string, never>;
   };

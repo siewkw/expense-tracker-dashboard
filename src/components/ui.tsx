@@ -1,11 +1,13 @@
 import { clsx } from 'clsx';
+import { useLanguage } from '../providers/LanguageProvider';
 
 export function PageHeader({ title, description, action }: { title: string; description?: string; action?: React.ReactNode }) {
+  const { t } = useLanguage();
   return (
     <div className="mb-7 flex flex-col gap-5 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <h1 className="text-2xl font-bold text-ink sm:text-3xl">{title}</h1>
-        {description ? <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{description}</p> : null}
+        <h1 className="text-2xl font-bold text-ink sm:text-3xl">{t(title)}</h1>
+        {description ? <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{t(description)}</p> : null}
       </div>
       {action ? <div className="w-full sm:w-auto">{action}</div> : null}
     </div>
@@ -17,11 +19,12 @@ export function Card({ children, className }: { children: React.ReactNode; class
 }
 
 export function StatCard({ label, value, detail }: { label: string; value: string; detail?: string }) {
+  const { t } = useLanguage();
   return (
     <Card>
-      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">{t(label)}</p>
       <p className="mt-3 text-2xl font-bold text-ink sm:text-[28px]">{value}</p>
-      {detail ? <p className="mt-2 text-sm text-slate-500">{detail}</p> : null}
+      {detail ? <p className="mt-2 text-sm text-slate-500">{t(detail)}</p> : null}
     </Card>
   );
 }
@@ -35,6 +38,7 @@ export function ErrorMessage({ message }: { message: string }) {
 }
 
 export function Button({ children, className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { t } = useLanguage();
   return (
     <button
       className={clsx(
@@ -43,7 +47,7 @@ export function Button({ children, className, ...props }: React.ButtonHTMLAttrib
       )}
       {...props}
     >
-      {children}
+      {typeof children === 'string' ? t(children) : children}
     </button>
   );
 }
@@ -61,9 +65,10 @@ export function TextArea({ className, ...props }: React.TextareaHTMLAttributes<H
 }
 
 export function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  const { t } = useLanguage();
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-semibold text-slate-700">{label}</span>
+      <span className="mb-2 block text-sm font-semibold text-slate-700">{t(label)}</span>
       {children}
     </label>
   );
